@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SkyWatch — What's Moving Above You?</title>
+  <title>SkyWatch — Diagnostic Test</title>
   <script src="https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js"></script>
   <style>
     body { font-family: system-ui, sans-serif; background: #070b14; color: #e2e8f0; margin: 0; padding: 16px; }
@@ -11,7 +11,6 @@
     h1 { font-size: 1.4rem; margin-bottom: 4px; color: #38bdf8; }
     .sub { color: #94a3b8; font-size: 0.9rem; margin-bottom: 16px; }
     button { background: #0284c7; color: white; border: none; padding: 12px 18px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%; }
-    button:hover { background: #0369a1; }
     .status { margin: 12px 0; font-size: 0.85rem; color: #94a3b8; }
     .card { background: #111827; border: 1px solid #1e293b; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
     .badge { display: inline-block; font-size: 0.75rem; padding: 2px 8px; border-radius: 99px; font-weight: 600; margin-bottom: 6px; }
@@ -19,20 +18,27 @@
     .sat { background: #064e3b; color: #6ee7b7; }
     .title { font-weight: 700; font-size: 1.05rem; }
     .meta { font-size: 0.85rem; color: #cbd5e1; margin-top: 4px; }
+    .debug { background: #020617; border: 1px solid #334155; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 0.78rem; color: #fbbf24; margin-top: 16px; white-space: pre-wrap; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🌌 SkyWatch Live</h1>
-    <div class="sub">Detecting aircraft & satellites overhead 24/7</div>
+    <h1>🌌 SkyWatch Live (Wide Test)</h1>
+    <div class="sub">Testing ±3° radius & live API diagnostics</div>
     <button id="scanBtn">📍 Scan My Sky Now</button>
-    <div id="status" class="status">Tap above to allow GPS and scan your sky.</div>
+    <div id="status" class="status">Tap above to scan.</div>
     <div id="results"></div>
+    <div id="debug" class="debug">Debug Log ready...</div>
   </div>
 
   <script>
     const statusEl = document.getElementById("status");
     const resultsEl = document.getElementById("results");
+    const debugEl = document.getElementById("debug");
+
+    function log(msg) {
+      debugEl.textContent += `\n[${new Date().toLocaleTimeString()}] ${msg}`;
+    }
 
     function toCompass(deg) {
       const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
@@ -53,12 +59,18 @@
     }
 
     async function fetchPlanes(lat, lon) {
-      const url = `https://opensky-network.org/api/states/all?lamin=${lat-1}&lomin=${lon-1}&lamax=${lat+1}&lomax=${lon+1}`;
+      const box = 3; // Widened to ±3° (~330 km) for diagnostic test
+      const url = `https://opensky-network.org/api/states/all?lamin=${lat-box}&lomin=${lon-box}&lamax=${lat+box}&lomax=${lon+box}`;
+      log("Fetching OpenSky planes...");
       const res = await fetch(url);
+      log(`OpenSky HTTP status: ${res.status}`);
+      if (!res.ok) throw new Error(`OpenSky HTTP ${res.status}`);
       const data = await res.json();
+      const rawCount = data.states ? data.states.length : 0;
+      log(`OpenSky raw aircraft returned: ${rawCount}`);
       if (!data.states) return [];
       return data.states
-        .filter(s => !s[8] && s[5] && s[6]) // airborne with valid coords
+        .filter(s => !s[8] && s[5] && s[6])
         .map(s => {
           const { dist, brng } = getBearingAndDist(lat, lon, s[6], s[5]);
           const altFt = Math.round((s[7] || 0) * 3.28084);
@@ -75,11 +87,17 @@
     }
 
     async function fetchSatellites(lat, lon) {
-      const [issTxt, starlinkTxt] = await Promise.all([
-        fetch("https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle").then(r => r.text()),
-        fetch("https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=tle").then(r => r.text())
+      log("Fetching CelesTrak TLE data...");
+      const [issRes, starlinkRes] = await Promise.all([
+        fetch("https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle"),
+        fetch("https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=tle")
       ]);
-      const lines = (issTxt + "\n" + starlinkTxt).trim().split("\n").map(l => l.trim());
+      log(`CelesTrak HTTP status: ISS=${issRes.status}, Starlink=${starlinkRes.status}`);
+      const issTxt = await issRes.text();
+      const starlinkTxt = await starlinkRes.text();
+      const lines = (issTxt + "\n" + starlinkTxt).replace(/\r/g, "").trim().split("\n").map(l => l.trim()).filter(Boolean);
+      log(`Total TLE lines loaded: ${lines.length}`);
+
       const now = new Date();
       const gmst = satellite.gstime(now);
       const observerGd = { longitude: satellite.degreesToRadians(lon), latitude: satellite.degreesToRadians(lat), height: 0.1 };
@@ -93,7 +111,7 @@
         const positionEcf = satellite.eciToEcf(posVel.position, gmst);
         const lookAngles = satellite.ecfToLookAngles(observerGd, positionEcf);
         const elevDeg = satellite.radiansToDegrees(lookAngles.elevation);
-        if (elevDeg > 10) { // at least 10° above horizon
+        if (elevDeg > 5) { // Lowered to 5° for test
           const azDeg = Math.round(satellite.radiansToDegrees(lookAngles.azimuth));
           overhead.push({
             type: "sat",
@@ -104,35 +122,35 @@
           });
         }
       }
+      log(`Satellites above 5° horizon: ${overhead.length}`);
       return overhead.sort((a, b) => b.elev - a.elev).slice(0, 15);
     }
 
     document.getElementById("scanBtn").addEventListener("click", () => {
+      debugEl.textContent = "Starting diagnostic scan...";
       statusEl.textContent = "Getting GPS location...";
       resultsEl.innerHTML = "";
       navigator.geolocation.getCurrentPosition(async pos => {
         const { latitude: lat, longitude: lon } = pos.coords;
+        log(`GPS locked: ${lat.toFixed(4)}, ${lon.toFixed(4)}`);
         statusEl.textContent = `Scanning sky above ${lat.toFixed(3)}, ${lon.toFixed(3)}...`;
-        try {
-          const [planes, sats] = await Promise.all([
-            fetchPlanes(lat, lon).catch(() => []),
-            fetchSatellites(lat, lon).catch(() => [])
-          ]);
-          const all = [...planes, ...sats];
-          statusEl.textContent = `Found ${planes.length} planes and ${sats.length} visible-arc satellites right now.`;
-          resultsEl.innerHTML = all.length ? all.map(item => `
-            <div class="card">
-              <span class="badge ${item.type}">${item.type === "plane" ? "✈️ AIRCRAFT" : "🛰️ SATELLITE"}</span>
-              <div class="title">${item.name}</div>
-              <div class="meta">${item.detail}</div>
-              <div class="meta">${item.sub}</div>
-            </div>
-          `).join("") : "<div class='card'>No aircraft or tracked satellites above 10° right this second—try again in a minute!</div>";
-        } catch (err) {
-          statusEl.textContent = "Error scanning sky: " + err.message;
-        }
+
+        const planes = await fetchPlanes(lat, lon).catch(e => { log("Planes Error: " + e.message); return []; });
+        const sats = await fetchSatellites(lat, lon).catch(e => { log("Sats Error: " + e.message); return []; });
+
+        const all = [...planes, ...sats];
+        statusEl.textContent = `Found ${planes.length} planes and ${sats.length} satellites.`;
+        resultsEl.innerHTML = all.length ? all.map(item => `
+          <div class="card">
+            <span class="badge ${item.type}">${item.type === "plane" ? "✈️ AIRCRAFT" : "🛰️ SATELLITE"}</span>
+            <div class="title">${item.name}</div>
+            <div class="meta">${item.detail}</div>
+            <div class="meta">${item.sub}</div>
+          </div>
+        `).join("") : "<div class='card'>No objects found—check the yellow Debug Log below!</div>";
       }, err => {
-        statusEl.textContent = "Location permission denied: " + err.message;
+        log("GPS Error: " + err.message);
+        statusEl.textContent = "Location error: " + err.message;
       });
     });
   </script>
