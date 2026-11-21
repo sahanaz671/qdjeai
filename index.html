@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>SKYWATCH PRO // 3D MATRIX RADAR</title>
+  <title>SKYWATCH PRO // FULL VECTOR MATRIX</title>
   <script src="https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js"></script>
   <style>
     :root {
@@ -11,7 +11,7 @@
       --panel: rgba(2, 16, 6, 0.86);
       --green: #00ff41;
       --green-bright: #d4ffe0;
-      --green-dim: rgba(0, 255, 65, 0.22);
+      --green-dim: rgba(0, 255, 65, 0.24);
       --green-dark: #00330c;
       --amber: #ffb000;
       --cyan: #00f0ff;
@@ -23,7 +23,7 @@
       --panel: rgba(5, 25, 38, 0.88);
       --green: #38bdf8;
       --green-bright: #e0f2fe;
-      --green-dim: rgba(56, 189, 248, 0.25);
+      --green-dim: rgba(56, 189, 248, 0.26);
       --green-dark: #0c4a6e;
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -82,7 +82,7 @@
       box-shadow: 0 0 10px var(--green-dim);
     }
 
-    /* Flat, Sharp Tactical Radar Console */
+    /* Tactical Radar Console */
     .radar-box {
       background: var(--panel);
       backdrop-filter: blur(8px);
@@ -102,8 +102,8 @@
       padding-bottom: 6px;
     }
     .scope-container {
-      width: 268px;
-      height: 268px;
+      width: 272px;
+      height: 272px;
       margin: 6px auto;
       position: relative;
       border-radius: 50%;
@@ -124,6 +124,15 @@
     }
     .compass-ring::before { top: 0; bottom: 0; left: 50%; width: 1px; }
     .compass-ring::after { left: 0; right: 0; top: 50%; height: 1px; }
+
+    .route-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+    }
 
     .range-ring {
       position: absolute;
@@ -163,6 +172,7 @@
       background: conic-gradient(from 0deg, rgba(0, 255, 65, 0.34) 0deg, transparent 65deg);
       animation: radarSpin 4s linear infinite;
       pointer-events: none;
+      z-index: 4;
     }
     @keyframes radarSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
@@ -180,7 +190,7 @@
       position: absolute;
       bottom: 50%;
       width: 64px;
-      height: 134px;
+      height: 136px;
       background: linear-gradient(to top, rgba(0, 255, 65, 0.3), transparent);
       clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
     }
@@ -237,7 +247,7 @@
     .radar-legend {
       display: flex;
       justify-content: space-around;
-      font-size: 0.64rem;
+      font-size: 0.62rem;
       opacity: 0.85;
       margin-top: 8px;
       padding-top: 6px;
@@ -308,7 +318,6 @@
       letter-spacing: 0.03em;
     }
 
-    /* Crisp Flat Telemetry Cards */
     .card {
       background: var(--panel);
       backdrop-filter: blur(8px);
@@ -394,10 +403,10 @@
     <header>
       <div>
         <h1>[SKYWATCH_PRO // MATRIX]</h1>
-        <div class="sub" id="modeLabel">140 KM APPROACH RADAR • NIGHT</div>
+        <div class="sub" id="modeLabel">140 KM FULL-VECTOR RADAR • NIGHT</div>
       </div>
       <div class="hdr-btns">
-        <button class="mode-btn" id="soundToggle">🌌 AMBIENT: ON</button>
+        <button class="mode-btn" id="soundToggle">🔊 AUDIO: MAX</button>
         <button class="mode-btn" id="modeToggle">☀️ DAY</button>
       </div>
     </header>
@@ -416,6 +425,8 @@
           <div class="human-icon">🧍</div>
         </div>
         <div class="compass-ring" id="compassRing">
+          <!-- Full Past Trail + Forward Route Vectors SVG -->
+          <svg class="route-svg" id="routeVectors" viewBox="0 0 100 100"></svg>
           <div class="range-ring r-1"></div>
           <div class="range-ring r-2"></div>
           <span class="ring-label rl-1">45km</span>
@@ -430,10 +441,9 @@
       </div>
 
       <div class="radar-legend">
-        <span>✈️ JET</span>
-        <span style="color:var(--amber);">📦 CARGO</span>
-        <span style="color:var(--cyan);">🛰️ SATELLITE</span>
-        <span>TAP ICON TO LOCK</span>
+        <span>━ PAST TRAIL</span>
+        <span>┄ FUTURE PATH</span>
+        <span style="color:var(--cyan);">🛰️ ORBIT ARC</span>
       </div>
 
       <div class="lock-hud" id="lockHud">
@@ -454,32 +464,31 @@
       <button class="mode-btn" id="autoBtn">AUTO: OFF</button>
     </div>
 
-    <div class="status" id="status">TAP ANYWHERE OR SCAN TO ENGAGE INTERSTELLAR SYNTH & 3D SPACE RADAR.</div>
+    <div class="status" id="status">TAP ANYWHERE TO ENGAGE CONTINUOUS INTERSTELLAR SYNTH & HEAVY MATRIX.</div>
     <div id="results"></div>
   </div>
 
   <script>
-    /* ================= 1. REALISTIC 3D DEEP SPACE + CLASSIC MATRIX GRID ================= */
+    /* ================= 1. HEAVY MATRIX CODE + 3D STARFIELD ================= */
     const canvas = document.getElementById("spaceMatrixCanvas");
     const ctx = canvas.getContext("2d");
-    const matrixChars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ";
-    let W, H, cols, drops;
+    const matrixChars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ∑∏∆Ω";
+    let W, H, cols, drops, speeds;
     let stars3D = [];
     let isDayMode = false;
     let cameraYawOffset = 0;
     let cameraPitchOffset = 0;
-    let frameTick = 0;
 
     function initCanvasScene() {
       W = canvas.width = window.innerWidth;
       H = canvas.height = window.innerHeight;
 
-      // Classic crisp Matrix columns
-      cols = Math.floor(W / 16);
-      drops = Array.from({ length: cols }, () => Math.floor(Math.random() * (H / 16)));
+      // Dense 11px columns for heavy Matrix code rain
+      cols = Math.floor(W / 11);
+      drops = Array.from({ length: cols }, () => Math.floor(Math.random() * (H / 12)));
+      speeds = Array.from({ length: cols }, () => 0.65 + Math.random() * 0.9);
 
-      // True 3D perspective starfield (x, y, z coordinates)
-      stars3D = Array.from({ length: 220 }, () => ({
+      stars3D = Array.from({ length: 180 }, () => ({
         x: (Math.random() - 0.5) * W * 2.2,
         y: (Math.random() - 0.5) * H * 2.2,
         z: Math.random() * W,
@@ -490,33 +499,16 @@
     initCanvasScene();
 
     function draw3DSpaceAndMatrix() {
-      frameTick++;
-
-      // Smooth trail clear so both 3D star streaks & classic Matrix columns fade cleanly
-      ctx.fillStyle = isDayMode ? "rgba(3, 17, 26, 0.14)" : "rgba(0, 3, 1, 0.14)";
+      // Gentle persistence for long, glowing Matrix trails
+      ctx.fillStyle = isDayMode ? "rgba(3, 17, 26, 0.09)" : "rgba(0, 3, 1, 0.09)";
       ctx.fillRect(0, 0, W, H);
 
-      // 1. Subtle 3D Nebula Core (shifts with compass & device tilt)
-      const nebX = W * 0.5 + cameraYawOffset * 0.8;
-      const nebY = H * 0.3 + cameraPitchOffset * 0.8;
-      const grad = ctx.createRadialGradient(nebX, nebY, 10, nebX, nebY, W * 0.65);
-      if (isDayMode) {
-        grad.addColorStop(0, "rgba(56, 189, 248, 0.06)");
-        grad.addColorStop(1, "rgba(0, 0, 0, 0)");
-      } else {
-        grad.addColorStop(0, "rgba(0, 255, 65, 0.05)");
-        grad.addColorStop(0.5, "rgba(0, 120, 255, 0.03)");
-        grad.addColorStop(1, "rgba(0, 0, 0, 0)");
-      }
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
-
-      // 2. True 3D Perspective Starfield Tunnel
+      // 3D Starfield Tunnel
       const cx = W / 2 + cameraYawOffset;
       const cy = H / 2 + cameraPitchOffset;
       for (let s of stars3D) {
         s.pz = s.z;
-        s.z -= 1.8; // Forward warp speed through 3D space
+        s.z -= 1.6;
         if (s.z <= 1) {
           s.x = (Math.random() - 0.5) * W * 2.2;
           s.y = (Math.random() - 0.5) * H * 2.2;
@@ -530,30 +522,34 @@
 
         const depthRatio = 1 - s.z / W;
         ctx.strokeStyle = isDayMode
-          ? `rgba(186, 230, 253, ${depthRatio * 0.65})`
-          : `rgba(212, 255, 224, ${depthRatio * 0.65})`;
-        ctx.lineWidth = Math.max(0.5, depthRatio * 2.1);
+          ? `rgba(186, 230, 253, ${depthRatio * 0.5})`
+          : `rgba(212, 255, 224, ${depthRatio * 0.5})`;
+        ctx.lineWidth = Math.max(0.5, depthRatio * 1.8);
         ctx.beginPath();
         ctx.moveTo(px, py);
         ctx.lineTo(sx, sy);
         ctx.stroke();
       }
 
-      // 3. Classic Crisp Vertical Matrix Code Columns (stepped every 2nd frame for authentic cadence)
-      if (frameTick % 2 === 0) {
-        ctx.font = "bold 14px monospace";
-        for (let i = 0; i < drops.length; i++) {
-          const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
-          const x = i * 16;
-          const y = drops[i] * 16;
+      // Heavy Matrix Code Rain (renders every frame with bright white-green head glyph)
+      ctx.font = "bold 12px monospace";
+      for (let i = 0; i < drops.length; i++) {
+        const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+        const x = i * 11;
+        const y = Math.floor(drops[i]) * 12;
 
-          ctx.fillStyle = isDayMode ? "rgba(56, 189, 248, 0.42)" : "rgba(0, 255, 65, 0.42)";
-          ctx.fillText(text, x, y);
+        // Bright glowing lead glyph
+        ctx.fillStyle = isDayMode ? "rgba(224, 242, 254, 0.9)" : "rgba(212, 255, 224, 0.9)";
+        ctx.fillText(text, x, y);
 
-          if (y > H && Math.random() > 0.975) {
-            drops[i] = 0;
-          }
-          drops[i]++;
+        // Rich neon trail behind lead glyph
+        const trailChar = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+        ctx.fillStyle = isDayMode ? "rgba(56, 189, 248, 0.65)" : "rgba(0, 255, 65, 0.65)";
+        ctx.fillText(trailChar, x, y - 12);
+
+        drops[i] += speeds[i];
+        if (y > H && Math.random() > 0.96) {
+          drops[i] = 0;
         }
       }
 
@@ -561,24 +557,24 @@
     }
     requestAnimationFrame(draw3DSpaceAndMatrix);
 
-    /* ================= 2. EVOLVING INTERSTELLAR 4-CHORD SYNTH + COSMIC WIND ================= */
+    /* ================= 2. BOOSTED INTERSTELLAR AMBIENT + DISTINCT EVENT SFX ================= */
     let audioCtx = null;
     let ambientStarted = false;
     let masterGain = null;
+    let compressor = null;
     let soundEnabled = true;
     const soundToggle = document.getElementById("soundToggle");
 
-    // Evolving Interstellar-inspired 4-chord progression (freqs in Hz)
     const spaceChords = [
-      [55.00, 110.00, 164.81, 220.00, 329.63], // Am (A1, A2, E3, A3, E4)
-      [43.65, 87.31,  164.81, 220.00, 261.63], // Fmaj7 (F1, F2, E3, A3, C4)
-      [65.41, 130.81, 164.81, 196.00, 293.66], // Cadd9 (C2, C3, E3, G3, D4)
-      [49.00, 98.00,  146.83, 196.00, 246.94]  // G6 (G1, G2, D3, G3, B3)
+      [55.00, 110.00, 164.81, 220.00, 329.63], // Am9
+      [43.65, 87.31,  164.81, 220.00, 261.63], // Fmaj7
+      [65.41, 130.81, 164.81, 196.00, 293.66], // Cadd9
+      [49.00, 98.00,  146.83, 196.00, 246.94]  // G6
     ];
     let chordIndex = 0;
     let chordOscillators = [];
 
-    function startEvolvingSpaceAudio() {
+    function startBoostedSpaceAudio() {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (!AudioContext) return;
       if (!audioCtx) audioCtx = new AudioContext();
@@ -586,54 +582,61 @@
       if (ambientStarted) return;
 
       ambientStarted = true;
-      masterGain = audioCtx.createGain();
-      masterGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-      if (soundEnabled) {
-        masterGain.gain.exponentialRampToValueAtTime(0.24, audioCtx.currentTime + 2.5);
-      }
-      masterGain.connect(audioCtx.destination);
 
-      // A. Warm Low-Pass Filter for Organ Pad
+      // Dynamics compressor maximizes phone speaker loudness without clipping
+      compressor = audioCtx.createDynamicsCompressor();
+      compressor.threshold.setValueAtTime(-18, audioCtx.currentTime);
+      compressor.knee.setValueAtTime(12, audioCtx.currentTime);
+      compressor.ratio.setValueAtTime(4, audioCtx.currentTime);
+      compressor.attack.setValueAtTime(0.01, audioCtx.currentTime);
+      compressor.release.setValueAtTime(0.25, audioCtx.currentTime);
+      compressor.connect(audioCtx.destination);
+
+      masterGain = audioCtx.createGain();
+      masterGain.gain.setValueAtTime(0.001, audioCtx.currentTime);
+      if (soundEnabled) {
+        masterGain.gain.exponentialRampToValueAtTime(0.68, audioCtx.currentTime + 1.8);
+      }
+      masterGain.connect(compressor);
+
+      // Warm 460Hz lowpass lets phone speakers project rich organ warmth clearly
       const padFilter = audioCtx.createBiquadFilter();
       padFilter.type = "lowpass";
-      padFilter.frequency.setValueAtTime(280, audioCtx.currentTime);
-      padFilter.Q.setValueAtTime(0.8, audioCtx.currentTime);
+      padFilter.frequency.setValueAtTime(460, audioCtx.currentTime);
+      padFilter.Q.setValueAtTime(1.1, audioCtx.currentTime);
 
-      // Breathing filter sweep
       const filterLfo = audioCtx.createOscillator();
       const filterLfoGain = audioCtx.createGain();
-      filterLfo.frequency.setValueAtTime(0.09, audioCtx.currentTime);
-      filterLfoGain.gain.setValueAtTime(120, audioCtx.currentTime);
+      filterLfo.frequency.setValueAtTime(0.1, audioCtx.currentTime);
+      filterLfoGain.gain.setValueAtTime(160, audioCtx.currentTime);
       filterLfo.connect(filterLfoGain);
       filterLfoGain.connect(padFilter.frequency);
       filterLfo.start();
       padFilter.connect(masterGain);
 
-      // Create 5 layered sine/triangle voices that glide smoothly between chords
       spaceChords[0].forEach((freq, idx) => {
         const osc = audioCtx.createOscillator();
         const voiceGain = audioCtx.createGain();
         osc.type = idx < 2 ? "sine" : "triangle";
         osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        voiceGain.gain.setValueAtTime(idx === 0 ? 0.36 : (idx === 1 ? 0.22 : 0.08), audioCtx.currentTime);
+        voiceGain.gain.setValueAtTime(idx === 0 ? 0.42 : (idx === 1 ? 0.28 : 0.14), audioCtx.currentTime);
         osc.connect(voiceGain);
         voiceGain.connect(padFilter);
         osc.start();
         chordOscillators.push(osc);
       });
 
-      // Evolve chord every 7 seconds with smooth portamento glide
       setInterval(() => {
         if (!audioCtx || !soundEnabled) return;
         chordIndex = (chordIndex + 1) % spaceChords.length;
         const nextChord = spaceChords[chordIndex];
         const now = audioCtx.currentTime;
         chordOscillators.forEach((osc, i) => {
-          osc.frequency.setTargetAtTime(nextChord[i], now, 1.4);
+          osc.frequency.setTargetAtTime(nextChord[i], now, 1.2);
         });
-      }, 7000);
+      }, 6500);
 
-      // B. Gentle Cosmic Solar Wind (Filtered Pink Noise)
+      // Solar Wind layer
       const bufferSize = audioCtx.sampleRate * 3;
       const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
       const output = noiseBuffer.getChannelData(0);
@@ -646,7 +649,7 @@
         b3 = 0.86650 * b3 + white * 0.3104856;
         b4 = 0.55000 * b4 + white * 0.5329522;
         b5 = -0.7616 * b5 - white * 0.0168980;
-        output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.03;
+        output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.04;
         b6 = white * 0.115926;
       }
       const whiteNoise = audioCtx.createBufferSource();
@@ -655,11 +658,11 @@
 
       const windFilter = audioCtx.createBiquadFilter();
       windFilter.type = "bandpass";
-      windFilter.frequency.setValueAtTime(340, audioCtx.currentTime);
-      windFilter.Q.setValueAtTime(1.5, audioCtx.currentTime);
+      windFilter.frequency.setValueAtTime(380, audioCtx.currentTime);
+      windFilter.Q.setValueAtTime(1.4, audioCtx.currentTime);
 
       const windGain = audioCtx.createGain();
-      windGain.gain.setValueAtTime(0.14, audioCtx.currentTime);
+      windGain.gain.setValueAtTime(0.22, audioCtx.currentTime);
 
       whiteNoise.connect(windFilter);
       windFilter.connect(windGain);
@@ -667,36 +670,103 @@
       whiteNoise.start();
     }
 
-    ["pointerdown", "touchstart", "click"].forEach(evt => {
-      window.addEventListener(evt, startEvolvingSpaceAudio, { once: true });
-    });
-
-    function playSubtleSonarDrop() {
+    // Distinct Sound 1: Radar Scan Sonar Wave
+    function playScanPulseSfx() {
       if (!soundEnabled) return;
-      startEvolvingSpaceAudio();
+      startBoostedSpaceAudio();
       if (!audioCtx) return;
       const now = audioCtx.currentTime;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = "sine";
-      osc.frequency.setValueAtTime(280, now);
-      osc.frequency.exponentialRampToValueAtTime(160, now + 0.45);
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(520, now + 0.55);
       gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.055, now + 0.06);
-      gain.gain.exponentialRampToValueAtTime(0.0005, now + 0.65);
+      gain.gain.linearRampToValueAtTime(0.18, now + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
       osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      gain.connect(compressor || audioCtx.destination);
       osc.start(now);
       osc.stop(now + 0.7);
     }
 
+    // Distinct Sound 2: Tactical Target Lock-On Click
+    function playTargetLockSfx() {
+      if (!soundEnabled) return;
+      startBoostedSpaceAudio();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      [440, 660].forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, now + i * 0.06);
+        gain.gain.setValueAtTime(0.16, now + i * 0.06);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.14);
+        osc.connect(gain);
+        gain.connect(compressor || audioCtx.destination);
+        osc.start(now + i * 0.06);
+        osc.stop(now + i * 0.06 + 0.15);
+      });
+    }
+
+    // Distinct Sound 3: Compass Direction Alignment Harmonic
+    function playAlignHarmonicSfx() {
+      if (!soundEnabled) return;
+      startBoostedSpaceAudio();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(329.63, now);
+      osc.frequency.exponentialRampToValueAtTime(493.88, now + 0.4);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.15, now + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+      osc.connect(gain);
+      gain.connect(compressor || audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.6);
+    }
+
+    // Distinct Sound 4: Day/Night Mode Power Shift
+    function playModeShiftSfx() {
+      if (!soundEnabled) return;
+      startBoostedSpaceAudio();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(isDayMode ? 300 : 500, now);
+      osc.frequency.exponentialRampToValueAtTime(isDayMode ? 500 : 260, now + 0.35);
+      gain.gain.setValueAtTime(0.16, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      osc.connect(gain);
+      gain.connect(compressor || audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.45);
+    }
+
+    ["pointerdown", "touchstart", "click"].forEach(evt => {
+      window.addEventListener(evt, startBoostedSpaceAudio, { once: true });
+    });
+
+    // Keep audio alive if phone wakes up from background
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && audioCtx && audioCtx.state === "suspended" && soundEnabled) {
+        audioCtx.resume();
+      }
+    });
+
     soundToggle.addEventListener("click", (e) => {
       e.stopPropagation();
       soundEnabled = !soundEnabled;
-      soundToggle.textContent = soundEnabled ? "🌌 AMBIENT: ON" : "🔇 AMBIENT: OFF";
-      startEvolvingSpaceAudio();
+      soundToggle.textContent = soundEnabled ? "🔊 AUDIO: MAX" : "🔇 AUDIO: OFF";
+      startBoostedSpaceAudio();
       if (masterGain && audioCtx) {
-        masterGain.gain.setTargetAtTime(soundEnabled ? 0.24 : 0.0001, audioCtx.currentTime, 0.4);
+        masterGain.gain.setTargetAtTime(soundEnabled ? 0.68 : 0.0001, audioCtx.currentTime, 0.3);
       }
     });
 
@@ -707,7 +777,8 @@
       isDayMode = !isDayMode;
       document.body.classList.toggle("day-mode", isDayMode);
       modeToggle.textContent = isDayMode ? "🌙 NIGHT" : "☀️ DAY";
-      modeLabel.textContent = isDayMode ? "140 KM APPROACH RADAR • DAY" : "140 KM APPROACH RADAR • NIGHT";
+      modeLabel.textContent = isDayMode ? "140 KM FULL-VECTOR RADAR • DAY" : "140 KM FULL-VECTOR RADAR • NIGHT";
+      playModeShiftSfx();
       runScan();
     });
 
@@ -757,7 +828,7 @@
           alignEl.textContent = "🎯 ALIGNED — LOOK UP AT SKY!";
           if (!alignedChimedIds.has(id)) {
             alignedChimedIds.add(id);
-            playSubtleSonarDrop();
+            playAlignHarmonicSfx();
           }
         } else {
           card.classList.remove("aligned");
@@ -800,11 +871,12 @@
     }
     initCompass();
 
-    /* ================= 5. TARGET LOCKING, ROUTES & TELEMETRY ================= */
+    /* ================= 5. FULL RADAR ROUTES, TARGET LOCKING & TELEMETRY ================= */
     const PROXY_URL = "https://skywatch-proxy.itzsahanaj-0671.workers.dev";
     const statusEl = document.getElementById("status");
     const resultsEl = document.getElementById("results");
     const radarTargetsEl = document.getElementById("radarTargets");
+    const routeVectorsSvg = document.getElementById("routeVectors");
     const lockHud = document.getElementById("lockHud");
     const lockTitle = document.getElementById("lockTitle");
     const lockDist = document.getElementById("lockDist");
@@ -816,12 +888,13 @@
 
     function selectTargetLock(id) {
       lockedTargetId = (lockedTargetId === id) ? null : id;
-      playSubtleSonarDrop();
+      playTargetLockSfx();
       renderAllUI();
     }
 
     document.getElementById("unlockBtn").addEventListener("click", () => {
       lockedTargetId = null;
+      playTargetLockSfx();
       renderAllUI();
     });
 
@@ -853,6 +926,15 @@
       const brng = ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
       const elevDeg = distKm > 0.1 ? Math.max(1, Math.round(Math.atan2(altMeters / 1000, distKm) * 180 / Math.PI)) : 90;
       return { dist: distKm, brng: Math.round(brng), elevDeg };
+    }
+
+    // Project a point on radar SVG (0-100 coordinate space) from azimuth & radar radius %
+    function polarToSvg(azDeg, distPct) {
+      const rad = (azDeg - 90) * (Math.PI / 180);
+      return {
+        x: 50 + Math.cos(rad) * distPct,
+        y: 50 + Math.sin(rad) * distPct
+      };
     }
 
     async function lookupFlightRoute(callsign) {
@@ -910,6 +992,20 @@
         const isCargo = ["FDX", "UPS", "CLX", "GTI", "DHL", "BOX", "ATN"].some(c => callsign.startsWith(c));
         const vRate = p.baro_rate ? (p.baro_rate > 250 ? `↗ +${p.baro_rate} fpm` : (p.baro_rate < -250 ? `↘ ${p.baro_rate} fpm` : "→ LEVEL")) : "→ CRUISE";
 
+        // Compute past wake trail & future route vector in SVG coordinates
+        const distPct = Math.min(46, (dist / 140) * 46);
+        const pos = polarToSvg(brng, distPct);
+        const trackRad = (track - 90) * (Math.PI / 180);
+        const vecLen = Math.min(28, Math.max(10, (speedKmh / 900) * 22));
+        const pastPt = {
+          x: pos.x - Math.cos(trackRad) * (vecLen * 0.75),
+          y: pos.y - Math.sin(trackRad) * (vecLen * 0.75)
+        };
+        const futurePt = {
+          x: pos.x + Math.cos(trackRad) * vecLen,
+          y: pos.y + Math.sin(trackRad) * vecLen
+        };
+
         return {
           id: p.hex || callsign,
           kind: isCargo ? "cargo" : "jet",
@@ -925,7 +1021,10 @@
           az: brng,
           track,
           elevText: `${elevDeg}° UP`,
-          radarDistPct: Math.min(46, (dist / 140) * 46),
+          radarDistPct: distPct,
+          pos,
+          pastPt,
+          futurePt,
           look: `${toCompass(brng)} (${brng}°) • ${elevDeg}° HIGH`,
           distOnly: `${dist.toFixed(1)} KM`,
           distText: `${dist.toFixed(1)} KM (${vRate})`,
@@ -944,25 +1043,39 @@
       const txt = await res.text();
       const lines = txt.replace(/\r/g, "").trim().split("\n").map(l => l.trim()).filter(Boolean);
       const now = new Date();
-      const later = new Date(now.getTime() + 60000);
-      const gmst = satellite.gstime(now);
-      const gmstLater = satellite.gstime(later);
+      const past = new Date(now.getTime() - 90000);   // -1.5 min past orbital wake
+      const future = new Date(now.getTime() + 120000); // +2 min future orbital arc
+      const gmstNow = satellite.gstime(now);
+      const gmstPast = satellite.gstime(past);
+      const gmstFuture = satellite.gstime(future);
       const observerGd = { longitude: satellite.degreesToRadians(lon), latitude: satellite.degreesToRadians(lat), height: 0.1 };
       const sats = [];
 
       for (let i = 0; i < lines.length - 2; i += 3) {
         const satrec = satellite.twoline2satrec(lines[i+1], lines[i+2]);
-        const posNow = satellite.propagate(satrec, now);
-        const posNext = satellite.propagate(satrec, later);
-        if (!posNow.position || !posNext.position) continue;
+        const pNow = satellite.propagate(satrec, now);
+        const pPast = satellite.propagate(satrec, past);
+        const pFuture = satellite.propagate(satrec, future);
+        if (!pNow.position || !pPast.position || !pFuture.position) continue;
 
-        const lookNow = satellite.ecfToLookAngles(observerGd, satellite.eciToEcf(posNow.position, gmst));
+        const lookNow = satellite.ecfToLookAngles(observerGd, satellite.eciToEcf(pNow.position, gmstNow));
         const elevDeg = satellite.radiansToDegrees(lookNow.elevation);
 
         if (elevDeg > 10) {
           const azNow = Math.round(satellite.radiansToDegrees(lookNow.azimuth));
-          const lookNext = satellite.ecfToLookAngles(observerGd, satellite.eciToEcf(posNext.position, gmstLater));
-          const azNext = Math.round(satellite.radiansToDegrees(lookNext.azimuth));
+          const distPctNow = Math.max(8, ((90 - elevDeg) / 80) * 46);
+          const pos = polarToSvg(azNow, distPctNow);
+
+          const lookPast = satellite.ecfToLookAngles(observerGd, satellite.eciToEcf(pPast.position, gmstPast));
+          const azPast = Math.round(satellite.radiansToDegrees(lookPast.azimuth));
+          const elevPast = Math.max(5, satellite.radiansToDegrees(lookPast.elevation));
+          const pastPt = polarToSvg(azPast, Math.min(46, Math.max(8, ((90 - elevPast) / 80) * 46)));
+
+          const lookFuture = satellite.ecfToLookAngles(observerGd, satellite.eciToEcf(pFuture.position, gmstFuture));
+          const azFuture = Math.round(satellite.radiansToDegrees(lookFuture.azimuth));
+          const elevFuture = Math.max(5, satellite.radiansToDegrees(lookFuture.elevation));
+          const futurePt = polarToSvg(azFuture, Math.min(46, Math.max(8, ((90 - elevFuture) / 80) * 46)));
+
           const rangeKm = Math.round(lookNow.rangeSat);
 
           sats.push({
@@ -972,19 +1085,22 @@
             color: "#00f0ff",
             shortLabel: lines[i].slice(0, 10),
             name: lines[i],
-            route: `ORBIT ARC: ${toCompass(azNow)} ➔ ${toCompass(azNext)}`,
+            route: `ORBIT ARC: ${toCompass(azPast)} ➔ ${toCompass(azFuture)}`,
             squawk: "NORAD TLE",
             timeStatus: `VISIBLE ARC (${Math.round(elevDeg)}° ELEV)`,
             shortEta: `${Math.round(elevDeg)}° ARC`,
             isIncoming: true,
             az: azNow,
-            track: azNext,
+            track: azFuture,
             elevText: `${Math.round(elevDeg)}° UP`,
-            radarDistPct: Math.max(8, ((90 - elevDeg) / 80) * 46),
+            radarDistPct: distPctNow,
+            pos,
+            pastPt,
+            futurePt,
             look: `${toCompass(azNow)} (${azNow}°) • ${Math.round(elevDeg)}° HIGH`,
             distOnly: `${rangeKm} KM`,
             distText: `${rangeKm} KM SLANT`,
-            headingText: `AZ ${azNow}° ➔ ${azNext}°`,
+            headingText: `AZ ${azPast}° ➔ ${azFuture}°`,
             speedAlt: `27,500 KM/H • LEO ORBIT`,
             sortKey: 90 - elevDeg
           });
@@ -1005,15 +1121,33 @@
         lockHud.classList.remove("active");
       }
 
+      // 1. Render Full Past Trail + Future Route Vectors inside Radar SVG
+      routeVectorsSvg.innerHTML = allDetectedItems.map(item => {
+        const isSel = item.id === lockedTargetId;
+        const strokeCol = isSel ? "#ff3b30" : item.color;
+        const opacity = isSel ? "0.95" : "0.55";
+        const width = isSel ? "1.1" : "0.65";
+        return `
+          <!-- Solid Past Trail -->
+          <line x1="${item.pastPt.x.toFixed(1)}" y1="${item.pastPt.y.toFixed(1)}"
+                x2="${item.pos.x.toFixed(1)}" y2="${item.pos.y.toFixed(1)}"
+                stroke="${strokeCol}" stroke-width="${width}" stroke-opacity="${opacity}" />
+          <!-- Dashed Future Route Vector -->
+          <line x1="${item.pos.x.toFixed(1)}" y1="${item.pos.y.toFixed(1)}"
+                x2="${item.futurePt.x.toFixed(1)}" y2="${item.futurePt.y.toFixed(1)}"
+                stroke="${strokeCol}" stroke-width="${width}" stroke-dasharray="1.8,1.4" stroke-opacity="${opacity}" />
+          <!-- Endpoint dot -->
+          <circle cx="${item.futurePt.x.toFixed(1)}" cy="${item.futurePt.y.toFixed(1)}" r="0.8" fill="${strokeCol}" fill-opacity="${opacity}" />
+        `;
+      }).join("");
+
+      // 2. Render Exact Object Silhouettes on Radar Scope
       radarTargetsEl.innerHTML = allDetectedItems.map(item => {
-        const rad = (item.az - 90) * (Math.PI / 180);
-        const x = 50 + Math.cos(rad) * item.radarDistPct;
-        const y = 50 + Math.sin(rad) * item.radarDistPct;
         const isSel = item.id === lockedTargetId;
         return `
           <div class="radar-target ${isSel ? "selected" : ""}"
                onclick="selectTargetLock('${item.id}')"
-               style="left:${x}%;top:${y}%;color:${item.color};">
+               style="left:${item.pos.x}%;top:${item.pos.y}%;color:${item.color};">
             ${isSel ? '<div class="reticle"></div>' : ""}
             ${getObjectSvg(item.kind, item.track, isSel ? "#ff3b30" : item.color)}
             <span class="target-tag" style="transform:rotate(${currentHeading}deg)">${item.shortLabel}</span>
@@ -1021,6 +1155,7 @@
         `;
       }).join("");
 
+      // 3. Render Detailed Telemetry Cards
       resultsEl.innerHTML = allDetectedItems.length ? allDetectedItems.map(item => {
         const isSel = item.id === lockedTargetId;
         return `
@@ -1067,7 +1202,8 @@
     }
 
     function runScan() {
-      startEvolvingSpaceAudio();
+      startBoostedSpaceAudio();
+      playScanPulseSfx();
       initCompass();
       statusEl.textContent = "SCANNING 140 KM APPROACH SECTOR & ORBITS...";
       navigator.geolocation.getCurrentPosition(async pos => {
