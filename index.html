@@ -3,24 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>SKYWATCH // MATRIX RADAR</title>
+  <title>SKYWATCH PRO // TACTICAL RADAR</title>
   <script src="https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js"></script>
   <style>
     :root {
-      --bg: #000400;
-      --panel: rgba(0, 18, 4, 0.84);
+      --bg: #000401;
+      --panel: rgba(2, 18, 7, 0.88);
+      --panel-solid: #021408;
       --green: #00ff41;
-      --green-dim: rgba(0, 255, 65, 0.25);
-      --green-dark: #003b00;
+      --green-bright: #ccffd8;
+      --green-dim: rgba(0, 255, 65, 0.22);
+      --green-dark: #00380e;
       --amber: #ffb000;
       --cyan: #00f0ff;
+      --red: #ff3b30;
       --font: "Courier New", Courier, monospace;
     }
     body.day-mode {
-      --bg: #04131a;
-      --panel: rgba(6, 28, 38, 0.86);
+      --bg: #04121c;
+      --panel: rgba(6, 26, 40, 0.9);
+      --panel-solid: #061c2b;
       --green: #38bdf8;
-      --green-dim: rgba(56, 189, 248, 0.28);
+      --green-bright: #e0f2fe;
+      --green-dim: rgba(56, 189, 248, 0.25);
       --green-dark: #0c4a6e;
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -40,15 +45,14 @@
       width: 100%;
       height: 100%;
       z-index: 0;
-      opacity: 0.28;
       pointer-events: none;
     }
     .app {
       position: relative;
       z-index: 1;
-      max-width: 540px;
+      max-width: 560px;
       margin: 0 auto;
-      padding: 16px 14px 60px;
+      padding: 14px 12px 70px;
     }
     header {
       display: flex;
@@ -56,16 +60,16 @@
       align-items: center;
       border-bottom: 1px solid var(--green-dim);
       padding-bottom: 10px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
       gap: 6px;
     }
     h1 {
       margin: 0;
-      font-size: 1.15rem;
-      letter-spacing: 0.06em;
-      text-shadow: 0 0 10px var(--green);
+      font-size: 1.08rem;
+      letter-spacing: 0.08em;
+      text-shadow: 0 0 12px var(--green);
     }
-    .sub { font-size: 0.68rem; opacity: 0.8; margin-top: 2px; }
+    .sub { font-size: 0.65rem; opacity: 0.85; margin-top: 2px; }
     .hdr-btns { display: flex; gap: 6px; }
     .mode-btn {
       background: var(--panel);
@@ -74,37 +78,41 @@
       padding: 6px 8px;
       border-radius: 6px;
       font-family: var(--font);
-      font-size: 0.72rem;
+      font-size: 0.68rem;
       font-weight: bold;
       cursor: pointer;
       box-shadow: 0 0 8px var(--green-dim);
     }
 
-    /* ATC Radar Scope */
+    /* Tactical Radar Console */
     .radar-box {
       background: var(--panel);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       border: 1px solid var(--green);
       border-radius: 14px;
-      padding: 14px;
-      margin-bottom: 14px;
-      box-shadow: 0 0 25px var(--green-dim), inset 0 0 20px var(--green-dim);
+      padding: 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 0 28px var(--green-dim), inset 0 0 24px var(--green-dim);
     }
     .radar-header {
       display: flex;
       justify-content: space-between;
-      font-size: 0.75rem;
-      margin-bottom: 10px;
+      font-size: 0.72rem;
+      margin-bottom: 8px;
+      border-bottom: 1px dashed var(--green-dim);
+      padding-bottom: 6px;
     }
     .scope-container {
-      width: 220px;
-      height: 220px;
-      margin: 0 auto;
+      width: 268px;
+      height: 268px;
+      margin: 6px auto;
       position: relative;
       border-radius: 50%;
       border: 2px solid var(--green);
-      background: radial-gradient(circle, var(--green-dim) 0%, #000000 75%);
+      background: radial-gradient(circle, var(--green-dim) 0%, #000000 78%);
       overflow: hidden;
-      box-shadow: 0 0 20px var(--green-dim);
+      box-shadow: 0 0 25px var(--green-dim);
     }
     .compass-ring {
       position: absolute;
@@ -118,24 +126,35 @@
     }
     .compass-ring::before { top: 0; bottom: 0; left: 50%; width: 1px; }
     .compass-ring::after { left: 0; right: 0; top: 50%; height: 1px; }
-    .ring-mid {
+
+    /* Distance Range Rings (45km, 95km, 140km) */
+    .range-ring {
       position: absolute;
-      inset: 25%;
       border-radius: 50%;
       border: 1px dashed var(--green-dim);
+      pointer-events: none;
     }
-    .ring-inner {
+    .r-1 { inset: 33.3%; }
+    .r-2 { inset: 16.6%; }
+    .ring-label {
       position: absolute;
-      inset: 50%;
-      border-radius: 50%;
-      border: 1px dotted var(--green-dim);
+      font-size: 0.56rem;
+      opacity: 0.7;
+      left: 51%;
+      transform: translateY(-100%);
+      pointer-events: none;
     }
+    .rl-1 { top: 33.3%; }
+    .rl-2 { top: 16.6%; }
+    .rl-3 { top: 5%; }
+
     .dir {
       position: absolute;
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       font-weight: bold;
+      z-index: 3;
     }
-    .d-n { top: 4px; left: 50%; transform: translateX(-50%); color: #ff3b30; text-shadow: 0 0 6px #ff3b30; }
+    .d-n { top: 4px; left: 50%; transform: translateX(-50%); color: var(--red); text-shadow: 0 0 8px var(--red); }
     .d-s { bottom: 4px; left: 50%; transform: translateX(-50%); }
     .d-e { right: 6px; top: 50%; transform: translateY(-50%); }
     .d-w { left: 6px; top: 50%; transform: translateY(-50%); }
@@ -144,7 +163,7 @@
       position: absolute;
       inset: 0;
       border-radius: 50%;
-      background: conic-gradient(from 0deg, rgba(0, 255, 65, 0.35) 0deg, transparent 65deg);
+      background: conic-gradient(from 0deg, rgba(0, 255, 65, 0.32) 0deg, transparent 65deg);
       animation: radarSpin 4s linear infinite;
       pointer-events: none;
     }
@@ -154,7 +173,7 @@
       position: absolute;
       top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      z-index: 5;
+      z-index: 6;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -163,13 +182,13 @@
     .fov-cone {
       position: absolute;
       bottom: 50%;
-      width: 54px;
-      height: 110px;
-      background: linear-gradient(to top, rgba(0, 255, 65, 0.32), transparent);
+      width: 64px;
+      height: 134px;
+      background: linear-gradient(to top, rgba(0, 255, 65, 0.3), transparent);
       clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
     }
     .human-icon {
-      width: 22px; height: 22px;
+      width: 24px; height: 24px;
       background: #000;
       border: 1.5px solid var(--green);
       border-radius: 50%;
@@ -177,97 +196,199 @@
       align-items: center;
       justify-content: center;
       font-size: 13px;
-      box-shadow: 0 0 10px var(--green);
+      box-shadow: 0 0 12px var(--green);
     }
 
-    .blip {
+    /* Exact Object Icons on Radar */
+    .radar-target {
       position: absolute;
-      width: 9px; height: 9px;
-      border-radius: 50%;
       transform: translate(-50%, -50%);
-      box-shadow: 0 0 8px currentColor;
-      z-index: 4;
+      z-index: 7;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 4px;
+    }
+    .target-tag {
+      font-size: 0.55rem;
+      font-weight: bold;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 1px 3px;
+      border-radius: 3px;
+      margin-top: 1px;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+    .radar-target.selected .target-tag {
+      border-color: var(--red);
+      color: #fff;
+      background: rgba(255, 59, 48, 0.35);
+    }
+    .reticle {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border: 1.5px dashed var(--red);
+      border-radius: 50%;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      animation: spinReticle 3s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes spinReticle { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+    /* Radar Telemetry Footer & Locked Target HUD */
+    .radar-legend {
+      display: flex;
+      justify-content: space-around;
+      font-size: 0.64rem;
+      opacity: 0.85;
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px dashed var(--green-dim);
+    }
+    .lock-hud {
+      margin-top: 10px;
+      background: rgba(255, 59, 48, 0.12);
+      border: 1px solid var(--red);
+      border-radius: 8px;
+      padding: 9px 10px;
+      display: none;
+    }
+    .lock-hud.active { display: block; animation: glitchIn 0.25s ease; }
+    .lock-hud-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.74rem;
+      font-weight: bold;
+      color: #ff6b6b;
+      margin-bottom: 4px;
+    }
+    .unlock-btn {
+      background: transparent;
+      border: 1px solid #ff6b6b;
+      color: #ff6b6b;
+      font-family: var(--font);
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .lock-hud-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      font-size: 0.72rem;
+      color: var(--green-bright);
     }
 
     .controls {
       display: flex;
       gap: 8px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     .scan-btn {
       flex: 1;
       background: var(--green-dark);
-      color: var(--green);
+      color: var(--green-bright);
       border: 1px solid var(--green);
       padding: 12px;
       border-radius: 8px;
       font-family: var(--font);
-      font-size: 0.92rem;
+      font-size: 0.9rem;
       font-weight: bold;
       cursor: pointer;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      box-shadow: 0 0 14px var(--green-dim);
+      box-shadow: 0 0 16px var(--green-dim);
     }
     .scan-btn:active { transform: scale(0.98); }
 
     .status {
       text-align: center;
-      font-size: 0.76rem;
+      font-size: 0.73rem;
       margin-bottom: 12px;
-      opacity: 0.9;
+      letter-spacing: 0.03em;
     }
 
+    /* Detailed Telemetry Cards */
     .card {
       background: var(--panel);
+      backdrop-filter: blur(6px);
       border: 1px solid var(--green-dim);
       border-left: 4px solid var(--green);
       border-radius: 8px;
       padding: 12px;
       margin-bottom: 10px;
-      animation: glitchIn 0.25s ease;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
     @keyframes glitchIn {
       0% { opacity: 0; transform: translateX(-6px); }
       100% { opacity: 1; transform: translateX(0); }
     }
+    .card.locked-card {
+      border-color: var(--red);
+      border-left-width: 5px;
+      box-shadow: 0 0 22px rgba(255, 59, 48, 0.28);
+    }
     .card.aligned {
-      border-color: var(--green);
-      box-shadow: 0 0 20px var(--green-dim);
-      background: rgba(0, 48, 12, 0.9);
+      border-color: var(--green-bright);
+      background: rgba(0, 52, 14, 0.92);
     }
     .card-top {
       display: flex;
       justify-content: space-between;
-      font-size: 0.72rem;
+      align-items: center;
+      font-size: 0.7rem;
       margin-bottom: 6px;
       font-weight: bold;
+      gap: 6px;
+    }
+    .lock-action-btn {
+      background: var(--green-dark);
+      color: var(--green-bright);
+      border: 1px solid var(--green);
+      border-radius: 5px;
+      padding: 4px 8px;
+      font-family: var(--font);
+      font-size: 0.68rem;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .lock-action-btn.is-locked {
+      background: rgba(255, 59, 48, 0.25);
+      border-color: var(--red);
+      color: #ff8a80;
     }
     .route-banner {
-      background: rgba(0, 255, 65, 0.1);
+      background: rgba(0, 255, 65, 0.09);
       border: 1px dashed var(--green-dim);
       padding: 6px 8px;
       border-radius: 4px;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       font-weight: bold;
       margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
     }
-    .title { font-size: 1.02rem; font-weight: bold; margin-bottom: 4px; }
+    .title { font-size: 1.02rem; font-weight: bold; margin-bottom: 6px; color: var(--green-bright); }
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       border-top: 1px solid var(--green-dim);
       padding-top: 8px;
     }
-    .lbl { opacity: 0.65; font-size: 0.66rem; text-transform: uppercase; }
+    .lbl { opacity: 0.65; font-size: 0.62rem; text-transform: uppercase; }
     .val { font-weight: bold; margin-top: 2px; }
     .align-footer {
       margin-top: 8px;
       padding-top: 6px;
       border-top: 1px dotted var(--green-dim);
-      font-size: 0.76rem;
+      font-size: 0.74rem;
       font-weight: bold;
       display: flex;
       justify-content: space-between;
@@ -280,11 +401,11 @@
   <div class="app">
     <header>
       <div>
-        <h1>[SKYWATCH_RADAR]</h1>
-        <div class="sub" id="modeLabel">SYS.MODE // NIGHT OPTICS</div>
+        <h1>[SKYWATCH_PRO // ATC]</h1>
+        <div class="sub" id="modeLabel">140 KM APPROACH RADAR • NIGHT</div>
       </div>
       <div class="hdr-btns">
-        <button class="mode-btn" id="soundToggle">🔊 SFX: ON</button>
+        <button class="mode-btn" id="soundToggle">🌌 AUDIO: ON</button>
         <button class="mode-btn" id="modeToggle">☀️ DAY</button>
       </div>
     </header>
@@ -292,7 +413,8 @@
     <div class="radar-box">
       <div class="radar-header">
         <span>HDG: <strong id="hdgVal">000° N</strong></span>
-        <span id="sensorTag">TAP SCAN TO INIT COMPASS</span>
+        <span>RANGE: <strong>140 KM</strong></span>
+        <span id="sensorTag">COMPASS: STANDBY</span>
       </div>
 
       <div class="scope-container">
@@ -302,111 +424,207 @@
           <div class="human-icon">🧍</div>
         </div>
         <div class="compass-ring" id="compassRing">
-          <div class="ring-mid"></div>
-          <div class="ring-inner"></div>
+          <div class="range-ring r-1"></div>
+          <div class="range-ring r-2"></div>
+          <span class="ring-label rl-1">45km</span>
+          <span class="ring-label rl-2">95km</span>
+          <span class="ring-label rl-3">140km</span>
           <span class="dir d-n">N</span>
           <span class="dir d-e">E</span>
           <span class="dir d-s">S</span>
           <span class="dir d-w">W</span>
-          <div id="radarBlips"></div>
+          <div id="radarTargets"></div>
+        </div>
+      </div>
+
+      <div class="radar-legend">
+        <span>✈️ JET</span>
+        <span style="color:var(--amber);">📦 CARGO</span>
+        <span style="color:var(--cyan);">🛰️ SATELLITE</span>
+        <span>TAP ICON TO LOCK</span>
+      </div>
+
+      <!-- Dedicated Target Lock HUD -->
+      <div class="lock-hud" id="lockHud">
+        <div class="lock-hud-top">
+          <span id="lockTitle">🎯 LOCKED: NONE</span>
+          <button class="unlock-btn" id="unlockBtn">✕ UNLOCK</button>
+        </div>
+        <div class="lock-hud-grid">
+          <div><div class="lbl">DISTANCE</div><div id="lockDist">--</div></div>
+          <div><div class="lbl">TILT / ELEV</div><div id="lockElev">--</div></div>
+          <div><div class="lbl">ETA / STATUS</div><div id="lockEta">--</div></div>
         </div>
       </div>
     </div>
 
     <div class="controls">
-      <button class="scan-btn" id="scanBtn">▶ INITIATE SKY SCAN</button>
+      <button class="scan-btn" id="scanBtn">▶ SCAN 140 KM SECTOR</button>
       <button class="mode-btn" id="autoBtn">AUTO: OFF</button>
     </div>
 
-    <div class="status" id="status">READY. TAP INITIATE SKY SCAN TO LOCK COMPASS & RADAR.</div>
+    <div class="status" id="status">READY. TAP SCAN TO DETECT APPROACHING AIRCRAFT & SATELLITES.</div>
     <div id="results"></div>
   </div>
 
   <script>
-    /* ================= 1. MATRIX CODE RAIN CANVAS ================= */
+    /* ================= 1. MULTI-DEPTH MATRIX + COSMIC DUST CANVAS ================= */
     const canvas = document.getElementById("matrixCanvas");
     const ctx = canvas.getContext("2d");
-    let cols, drops;
-    const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ";
+    const glyphs = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ∑∏∆Ω";
+    let streams = [];
+    let cosmicParticles = [];
+    let isDayMode = false;
 
-    function initMatrix() {
+    function initVisuals() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      cols = Math.floor(canvas.width / 16);
-      drops = Array(cols).fill(1);
+      const colCount = Math.floor(canvas.width / 14);
+      streams = Array.from({ length: colCount }, (_, i) => ({
+        x: i * 14,
+        y: Math.random() * canvas.height,
+        speed: 1.4 + Math.random() * 3.4,
+        size: Math.random() > 0.75 ? 14 : 11,
+        alpha: 0.32 + Math.random() * 0.6
+      }));
+      cosmicParticles = Array.from({ length: 40 }, () => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: 0.6 + Math.random() * 1.5,
+        vx: (Math.random() - 0.5) * 0.25,
+        vy: -0.15 - Math.random() * 0.3
+      }));
     }
-    window.addEventListener("resize", initMatrix);
-    initMatrix();
+    window.addEventListener("resize", initVisuals);
+    initVisuals();
 
-    let isDayMode = false;
-    function drawMatrix() {
-      ctx.fillStyle = isDayMode ? "rgba(4, 19, 26, 0.12)" : "rgba(0, 4, 0, 0.12)";
+    function renderFrame() {
+      ctx.fillStyle = isDayMode ? "rgba(4, 18, 28, 0.16)" : "rgba(0, 4, 1, 0.16)";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = isDayMode ? "#38bdf8" : "#00ff41";
-      ctx.font = "14px monospace";
-      for (let i = 0; i < drops.length; i++) {
-        const text = chars[Math.floor(Math.random() * chars.length)];
-        ctx.fillText(text, i * 16, drops[i] * 16);
-        if (drops[i] * 16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
-        drops[i]++;
-      }
-    }
-    setInterval(drawMatrix, 45);
 
-    /* ================= 2. WEB AUDIO RADAR SYNTHESIZER ================= */
+      for (let p of cosmicParticles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        ctx.fillStyle = isDayMode ? "rgba(186, 230, 253, 0.3)" : "rgba(204, 255, 216, 0.3)";
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      for (let s of streams) {
+        const char = glyphs[Math.floor(Math.random() * glyphs.length)];
+        ctx.font = `bold ${s.size}px monospace`;
+        ctx.fillStyle = isDayMode ? "#e0f2fe" : "#ccffd8";
+        ctx.fillText(char, s.x, s.y);
+
+        const trailChar = glyphs[Math.floor(Math.random() * glyphs.length)];
+        ctx.fillStyle = isDayMode ? `rgba(56, 189, 248, ${s.alpha})` : `rgba(0, 255, 65, ${s.alpha})`;
+        ctx.fillText(trailChar, s.x, s.y - s.size);
+
+        s.y += s.speed;
+        if (s.y > canvas.height + 20) {
+          s.y = -10;
+          s.speed = 1.4 + Math.random() * 3.4;
+        }
+      }
+      requestAnimationFrame(renderFrame);
+    }
+    requestAnimationFrame(renderFrame);
+
+    /* ================= 2. INTERSTELLAR AMBIENT SYNTH + LOCK AUDIO ================= */
     let audioCtx = null;
+    let ambientStarted = false;
+    let masterGain = null;
     let soundEnabled = true;
     const soundToggle = document.getElementById("soundToggle");
 
-    function unlockAudio() {
-      if (!audioCtx) {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) audioCtx = new AudioContext();
-      }
-      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    function startInterstellarDrone() {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+      if (!audioCtx) audioCtx = new AudioContext();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      if (ambientStarted) return;
+
+      ambientStarted = true;
+      masterGain = audioCtx.createGain();
+      masterGain.gain.setValueAtTime(soundEnabled ? 0.16 : 0.0001, audioCtx.currentTime);
+      masterGain.connect(audioCtx.destination);
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(230, audioCtx.currentTime);
+
+      const lfo = audioCtx.createOscillator();
+      const lfoGain = audioCtx.createGain();
+      lfo.frequency.setValueAtTime(0.08, audioCtx.currentTime);
+      lfoGain.gain.setValueAtTime(100, audioCtx.currentTime);
+      lfo.connect(lfoGain);
+      lfoGain.connect(filter.frequency);
+      lfo.start();
+      filter.connect(masterGain);
+
+      [55, 82.41, 110.2].forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const oscGain = audioCtx.createGain();
+        osc.type = i === 0 ? "sine" : "triangle";
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        oscGain.gain.setValueAtTime(i === 0 ? 0.42 : 0.15, audioCtx.currentTime);
+        osc.connect(oscGain);
+        oscGain.connect(filter);
+        osc.start();
+      });
     }
 
-    function playRadarPing() {
+    function playCosmicOrganChord() {
       if (!soundEnabled) return;
-      unlockAudio();
+      startInterstellarDrone();
       if (!audioCtx) return;
       const now = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(880, now);
-      osc.frequency.exponentialRampToValueAtTime(440, now + 0.35);
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start(now);
-      osc.stop(now + 0.4);
+      [220, 329.63, 493.88].forEach((freq) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.055, now + 0.35);
+        gain.gain.exponentialRampToValueAtTime(0.0008, now + 2.2);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 2.3);
+      });
     }
 
-    function playTargetLockBeep() {
+    function playTargetLockChime() {
       if (!soundEnabled) return;
-      unlockAudio();
+      startInterstellarDrone();
       if (!audioCtx) return;
       const now = audioCtx.currentTime;
-      [1100, 1480].forEach((freq, idx) => {
+      [783.99, 1046.5, 1318.5].forEach((freq, idx) => {
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
         osc.type = "triangle";
-        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
-        gain.gain.setValueAtTime(0.12, now + idx * 0.08);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.12);
+        osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+        gain.gain.setValueAtTime(0.09, now + idx * 0.07);
+        gain.gain.exponentialRampToValueAtTime(0.0008, now + idx * 0.07 + 0.35);
         osc.connect(gain);
         gain.connect(audioCtx.destination);
-        osc.start(now + idx * 0.08);
-        osc.stop(now + idx * 0.08 + 0.13);
+        osc.start(now + idx * 0.07);
+        osc.stop(now + idx * 0.07 + 0.38);
       });
     }
 
     soundToggle.addEventListener("click", () => {
       soundEnabled = !soundEnabled;
-      soundToggle.textContent = soundEnabled ? "🔊 SFX: ON" : "🔇 SFX: OFF";
-      if (soundEnabled) playRadarPing();
+      soundToggle.textContent = soundEnabled ? "🌌 AUDIO: ON" : "🔇 AUDIO: OFF";
+      startInterstellarDrone();
+      if (masterGain && audioCtx) {
+        masterGain.gain.setTargetAtTime(soundEnabled ? 0.16 : 0.0001, audioCtx.currentTime, 0.2);
+      }
+      if (soundEnabled) playCosmicOrganChord();
     });
 
     /* ================= 3. DAY / NIGHT MODE SWITCH ================= */
@@ -416,30 +634,33 @@
       isDayMode = !isDayMode;
       document.body.classList.toggle("day-mode", isDayMode);
       modeToggle.textContent = isDayMode ? "🌙 NIGHT" : "☀️ DAY";
-      modeLabel.textContent = isDayMode
-        ? "SYS.MODE // DAYLIGHT (JETS)"
-        : "SYS.MODE // NIGHT OPTICS";
+      modeLabel.textContent = isDayMode ? "140 KM APPROACH RADAR • DAY" : "140 KM APPROACH RADAR • NIGHT";
       runScan();
     });
 
-    /* ================= 4. MULTI-SENSOR ANDROID & IOS COMPASS ================= */
+    /* ================= 4. ANDROID COMPASS (MAG-NORTH) ================= */
     const compassRing = document.getElementById("compassRing");
     const hdgVal = document.getElementById("hdgVal");
     const sensorTag = document.getElementById("sensorTag");
     let currentHeading = 0;
     let compassStarted = false;
-    let lockedIds = new Set();
+    let alignedChimedIds = new Set();
 
     function toCompass(deg) {
       const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
       return dirs[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
     }
 
-    function updateRadarHeading(deg, sourceLabel) {
+    function updateRadarHeading(deg, label) {
       currentHeading = Math.round(((deg % 360) + 360) % 360);
       hdgVal.textContent = `${String(currentHeading).padStart(3, "0")}° ${toCompass(currentHeading)}`;
       compassRing.style.transform = `rotate(${-currentHeading}deg)`;
-      if (sourceLabel) sensorTag.textContent = sourceLabel;
+      if (label) sensorTag.textContent = label;
+
+      // Counter-rotate target labels so text stays readable
+      document.querySelectorAll(".target-tag").forEach(tag => {
+        tag.style.transform = `rotate(${currentHeading}deg)`;
+      });
 
       document.querySelectorAll(".card[data-az]").forEach(card => {
         const id = card.dataset.id;
@@ -447,80 +668,39 @@
         const diff = ((targetAz - currentHeading + 540) % 360) - 180;
         const alignEl = card.querySelector(".align-text");
 
-        if (Math.abs(diff) <= 15) {
+        if (Math.abs(diff) <= 14) {
           card.classList.add("aligned");
-          alignEl.textContent = "🎯 TARGET LOCKED — LOOK UP!";
-          if (!lockedIds.has(id)) {
-            lockedIds.add(id);
-            playTargetLockBeep();
+          alignEl.textContent = "🎯 ALIGNED — LOOK UP AT SKY!";
+          if (!alignedChimedIds.has(id)) {
+            alignedChimedIds.add(id);
+            playTargetLockChime();
           }
         } else {
           card.classList.remove("aligned");
-          lockedIds.delete(id);
+          alignedChimedIds.delete(id);
           alignEl.textContent = diff > 0 ? `↪ TURN RIGHT ${Math.abs(diff)}°` : `↩ TURN LEFT ${Math.abs(diff)}°`;
         }
       });
     }
 
-    function quaternionToHeading(q) {
-      const [x, y, z, w] = q;
-      const siny = 2 * (w * z + x * y);
-      const cosy = 1 - 2 * (y * y + z * z);
-      const yaw = Math.atan2(siny, cosy) * (180 / Math.PI);
-      return (360 - yaw) % 360;
-    }
-
-    function initAllCompassSensors() {
+    function initCompass() {
       if (compassStarted) return;
       compassStarted = true;
-      sensorTag.textContent = "PROBING SENSORS...";
+      let absActive = false;
 
-      // 1. Generic Sensor API: AbsoluteOrientationSensor (Android Chrome True North)
-      if ("AbsoluteOrientationSensor" in window) {
-        try {
-          const absSensor = new AbsoluteOrientationSensor({ frequency: 30 });
-          absSensor.addEventListener("reading", () => {
-            updateRadarHeading(quaternionToHeading(absSensor.quaternion), "COMPASS: MAG-3D");
-          });
-          absSensor.addEventListener("error", () => startFallbackSensors());
-          absSensor.start();
-          return;
-        } catch (e) {}
-      }
-      startFallbackSensors();
-    }
-
-    function startFallbackSensors() {
-      let gotAbsolute = false;
-
-      // 2. Android deviceorientationabsolute
       window.addEventListener("deviceorientationabsolute", (e) => {
         if (e.alpha !== null) {
-          gotAbsolute = true;
-          updateRadarHeading(360 - e.alpha, "COMPASS: MAG-NORTH");
+          absActive = true;
+          updateRadarHeading(360 - e.alpha, "MAG-NORTH");
         }
       }, true);
 
-      // 3. RelativeOrientationSensor (for Android phones without magnetometer, uses Gyro)
-      if ("RelativeOrientationSensor" in window) {
-        try {
-          const relSensor = new RelativeOrientationSensor({ frequency: 30 });
-          relSensor.addEventListener("reading", () => {
-            if (!gotAbsolute) {
-              updateRadarHeading(quaternionToHeading(relSensor.quaternion), "COMPASS: GYRO-3D");
-            }
-          });
-          relSensor.start();
-        } catch (e) {}
-      }
-
-      // 4. Standard deviceorientation (iOS & older Android)
       const handleStd = (e) => {
-        if (gotAbsolute) return;
+        if (absActive) return;
         if (typeof e.webkitCompassHeading === "number") {
-          updateRadarHeading(e.webkitCompassHeading, "COMPASS: IOS-MAG");
+          updateRadarHeading(e.webkitCompassHeading, "IOS-NORTH");
         } else if (e.alpha !== null) {
-          updateRadarHeading(360 - e.alpha, "COMPASS: GYRO");
+          updateRadarHeading(360 - e.alpha, "GYRO");
         }
       };
 
@@ -533,24 +713,60 @@
       }
     }
 
-    /* ================= 5. FLIGHT ROUTES, TIMES & SATELLITES ================= */
+    /* ================= 5. TARGET LOCKING, ROUTES & TELEMETRY ================= */
     const PROXY_URL = "https://skywatch-proxy.itzsahanaj-0671.workers.dev";
     const statusEl = document.getElementById("status");
     const resultsEl = document.getElementById("results");
-    const radarBlips = document.getElementById("radarBlips");
+    const radarTargetsEl = document.getElementById("radarTargets");
+    const lockHud = document.getElementById("lockHud");
+    const lockTitle = document.getElementById("lockTitle");
+    const lockDist = document.getElementById("lockDist");
+    const lockElev = document.getElementById("lockElev");
+    const lockEta = document.getElementById("lockEta");
     const routeCache = {};
+    let allDetectedItems = [];
+    let lockedTargetId = null;
 
-    function getBearingAndDist(lat1, lon1, lat2, lon2) {
+    function selectTargetLock(id) {
+      lockedTargetId = (lockedTargetId === id) ? null : id;
+      playTargetLockChime();
+      renderAllUI();
+    }
+
+    document.getElementById("unlockBtn").addEventListener("click", () => {
+      lockedTargetId = null;
+      renderAllUI();
+    });
+
+    function getObjectSvg(kind, heading, color) {
+      if (kind === "sat") {
+        return `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2">
+          <rect x="9" y="9" width="6" height="6" fill="${color}" fill-opacity="0.35"/>
+          <rect x="2" y="10" width="5" height="4"/>
+          <rect x="17" y="10" width="5" height="4"/>
+          <line x1="12" y1="15" x2="12" y2="20"/>
+        </svg>`;
+      }
+      // Aircraft SVG rotated to exact flight heading
+      const rot = heading || 0;
+      const scale = kind === "cargo" ? 1.15 : 1.0;
+      return `<svg width="20" height="20" viewBox="0 0 24 24" style="transform:rotate(${rot}deg) scale(${scale});" fill="${color}">
+        <path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/>
+      </svg>`;
+    }
+
+    function getBearingDistElev(lat1, lon1, lat2, lon2, altMeters) {
       const R = 6371;
       const dLat = (lat2 - lat1) * Math.PI / 180;
       const dLon = (lon2 - lon1) * Math.PI / 180;
       const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-      const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       const y = Math.sin(dLon) * Math.cos(lat2 * Math.PI / 180);
       const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
                 Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos(dLon);
       const brng = ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
-      return { dist, brng: Math.round(brng) };
+      const elevDeg = distKm > 0.1 ? Math.max(1, Math.round(Math.atan2(altMeters / 1000, distKm) * 180 / Math.PI)) : 90;
+      return { dist: distKm, brng: Math.round(brng), elevDeg };
     }
 
     async function lookupFlightRoute(callsign) {
@@ -571,26 +787,26 @@
       return routeCache[clean];
     }
 
-    function formatTimeWindow(distKm, speedKmh, trackDeg, brngFromUser) {
+    function analyzeApproach(distKm, speedKmh, trackDeg, brngFromUser) {
       const now = new Date();
       const fmt = (d) => d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      if (!speedKmh || speedKmh < 60) return `DETECTED ${fmt(now)}`;
+      if (!speedKmh || speedKmh < 60) return { status: `ACTIVE ${fmt(now)}`, shortEta: "ACTIVE", isIncoming: false };
 
       const bearingToUser = (brngFromUser + 180) % 360;
       const angleDiff = Math.abs(((trackDeg - bearingToUser + 540) % 360) - 180);
       const mins = Math.max(1, Math.round((distKm / speedKmh) * 60));
 
-      if (distKm <= 10) return `OVERHEAD NOW (${fmt(now)})`;
-      if (angleDiff <= 60) {
+      if (distKm <= 12) return { status: `🔥 OVERHEAD NOW (${fmt(now)})`, shortEta: "OVERHEAD", isIncoming: true };
+      if (angleDiff <= 65) {
         const eta = new Date(now.getTime() + mins * 60000);
-        return `APPROACH IN ~${mins}m (ETA ${fmt(eta)})`;
+        return { status: `⏳ INCOMING ~${mins}m (ETA ${fmt(eta)})`, shortEta: `IN ~${mins} MIN`, isIncoming: true };
       }
       const passed = new Date(now.getTime() - mins * 60000);
-      return `PASSED ~${mins}m AGO (${fmt(passed)})`;
+      return { status: `↗ RECEDING (~${mins}m AGO • ${fmt(passed)})`, shortEta: `PASSED ${mins}m`, isIncoming: false };
     }
 
     async function fetchPlanes(lat, lon) {
-      const radiusNm = 35;
+      const radiusNm = 75; // ~140 km early approach detection
       const url = `${PROXY_URL}/?type=planes&lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}&radius=${radiusNm}`;
       const res = await fetch(url);
       if (!res.ok) return [];
@@ -598,28 +814,38 @@
       const raw = (data.ac || []).filter(p => p.lat && p.lon && p.alt_baro !== "ground");
 
       const enriched = await Promise.all(raw.map(async p => {
-        const { dist, brng } = getBearingAndDist(lat, lon, p.lat, p.lon);
+        const altFt = typeof p.alt_baro === "number" ? p.alt_baro : 0;
+        const { dist, brng, elevDeg } = getBearingDistElev(lat, lon, p.lat, p.lon, altFt * 0.3048);
         const callsign = (p.flight || p.r || "UNKNOWN").trim();
         const routeStr = await lookupFlightRoute(callsign);
-        const altFt = typeof p.alt_baro === "number" ? p.alt_baro : 0;
         const speedKmh = Math.round((p.gs || 0) * 1.852);
-        const timeStatus = formatTimeWindow(dist, speedKmh, p.track || 0, brng);
+        const track = Math.round(p.track || 0);
+        const approach = analyzeApproach(dist, speedKmh, track, brng);
         const isCargo = ["FDX", "UPS", "CLX", "GTI", "DHL", "BOX", "ATN"].some(c => callsign.startsWith(c));
+        const vRate = p.baro_rate ? (p.baro_rate > 250 ? `↗ +${p.baro_rate} fpm` : (p.baro_rate < -250 ? `↘ ${p.baro_rate} fpm` : "→ LEVEL")) : "→ CRUISE";
 
         return {
           id: p.hex || callsign,
-          type: isCargo ? "📦 CARGO AIRCRAFT" : "✈️ COMMERCIAL JET",
+          kind: isCargo ? "cargo" : "jet",
+          typeLabel: isCargo ? "📦 CARGO AIRCRAFT" : "✈️ COMMERCIAL JET",
           color: isCargo ? "#ffb000" : "#00ff41",
+          shortLabel: callsign,
           name: `${callsign}${p.t ? ` [${p.t}]` : ""}`,
           route: routeStr,
-          timeStatus,
+          squawk: p.squawk ? `SQK ${p.squawk}` : "ADS-B",
+          timeStatus: approach.status,
+          shortEta: approach.shortEta,
+          isIncoming: approach.isIncoming,
           az: brng,
-          radarDistPct: Math.min(45, (dist / 65) * 45),
-          look: `${toCompass(brng)} (${brng}°)`,
-          distText: `${dist.toFixed(1)} KM`,
-          headingText: `${toCompass(p.track || 0)} (${Math.round(p.track || 0)}°)`,
+          track,
+          elevText: `${elevDeg}° UP`,
+          radarDistPct: Math.min(46, (dist / 140) * 46),
+          look: `${toCompass(brng)} (${brng}°) • ${elevDeg}° HIGH`,
+          distOnly: `${dist.toFixed(1)} KM`,
+          distText: `${dist.toFixed(1)} KM (${vRate})`,
+          headingText: `${toCompass(track)} (${track}°)`,
           speedAlt: `${speedKmh} KM/H • ${altFt.toLocaleString()} FT`,
-          sortKey: dist
+          sortKey: approach.isIncoming ? dist * 0.5 : dist
         };
       }));
       return enriched.sort((a, b) => a.sortKey - b.sortKey);
@@ -651,18 +877,27 @@
           const azNow = Math.round(satellite.radiansToDegrees(lookNow.azimuth));
           const lookNext = satellite.ecfToLookAngles(observerGd, satellite.eciToEcf(posNext.position, gmstLater));
           const azNext = Math.round(satellite.radiansToDegrees(lookNext.azimuth));
+          const rangeKm = Math.round(lookNow.rangeSat);
 
           sats.push({
             id: lines[i],
-            type: "🛰️ ORBITAL SATELLITE",
+            kind: "sat",
+            typeLabel: "🛰️ ORBITAL SATELLITE",
             color: "#00f0ff",
+            shortLabel: lines[i].slice(0, 10),
             name: lines[i],
-            route: `ORBIT PASS: ${toCompass(azNow)} ➔ ${toCompass(azNext)}`,
+            route: `ORBIT ARC: ${toCompass(azNow)} ➔ ${toCompass(azNext)}`,
+            squawk: "NORAD TLE",
             timeStatus: `VISIBLE ARC (${Math.round(elevDeg)}° ELEV)`,
+            shortEta: `${Math.round(elevDeg)}° ARC`,
+            isIncoming: true,
             az: azNow,
-            radarDistPct: Math.max(8, ((90 - elevDeg) / 80) * 45),
-            look: `${toCompass(azNow)} (${azNow}°)`,
-            distText: `${Math.round(lookNow.rangeSat)} KM`,
+            track: azNext,
+            elevText: `${Math.round(elevDeg)}° UP`,
+            radarDistPct: Math.max(8, ((90 - elevDeg) / 80) * 46),
+            look: `${toCompass(azNow)} (${azNow}°) • ${Math.round(elevDeg)}° HIGH`,
+            distOnly: `${rangeKm} KM`,
+            distText: `${rangeKm} KM SLANT`,
             headingText: `AZ ${azNow}° ➔ ${azNext}°`,
             speedAlt: `27,500 KM/H • LEO ORBIT`,
             sortKey: 90 - elevDeg
@@ -672,43 +907,60 @@
       return sats.sort((a, b) => a.sortKey - b.sortKey).slice(0, 12);
     }
 
-    function runScan() {
-      unlockAudio();
-      initAllCompassSensors();
-      statusEl.textContent = "SCANNING AIRSPACE & ORBITAL TELEMETRY...";
-      navigator.geolocation.getCurrentPosition(async pos => {
-        const { latitude: lat, longitude: lon } = pos.coords;
-        const [planes, sats] = await Promise.all([fetchPlanes(lat, lon), fetchSatellites(lat, lon)]);
-        const all = [...planes, ...sats];
+    function renderAllUI() {
+      // 1. Update Locked Target HUD
+      const lockedItem = allDetectedItems.find(i => i.id === lockedTargetId);
+      if (lockedItem) {
+        lockHud.classList.add("active");
+        lockTitle.textContent = `🎯 LOCKED: ${lockedItem.name}`;
+        lockDist.textContent = lockedItem.distOnly;
+        lockElev.textContent = lockedItem.elevText;
+        lockEta.textContent = lockedItem.shortEta;
+      } else {
+        lockHud.classList.remove("active");
+      }
 
-        if (all.length > 0) playRadarPing();
+      // 2. Render Exact Object Silhouettes on Radar Scope
+      radarTargetsEl.innerHTML = allDetectedItems.map(item => {
+        const rad = (item.az - 90) * (Math.PI / 180);
+        const x = 50 + Math.cos(rad) * item.radarDistPct;
+        const y = 50 + Math.sin(rad) * item.radarDistPct;
+        const isSel = item.id === lockedTargetId;
+        return `
+          <div class="radar-target ${isSel ? "selected" : ""}"
+               onclick="selectTargetLock('${item.id}')"
+               style="left:${x}%;top:${y}%;color:${item.color};">
+            ${isSel ? '<div class="reticle"></div>' : ""}
+            ${getObjectSvg(item.kind, item.track, isSel ? "#ff3b30" : item.color)}
+            <span class="target-tag" style="transform:rotate(${currentHeading}deg)">${item.shortLabel}</span>
+          </div>
+        `;
+      }).join("");
 
-        radarBlips.innerHTML = all.map(item => {
-          const rad = (item.az - 90) * (Math.PI / 180);
-          const x = 50 + Math.cos(rad) * item.radarDistPct;
-          const y = 50 + Math.sin(rad) * item.radarDistPct;
-          return `<div class="blip" style="left:${x}%;top:${y}%;background:${item.color};color:${item.color};"></div>`;
-        }).join("");
-
-        statusEl.textContent = `LOCKED: ${planes.length} AIRCRAFT // ${sats.length} SATELLITES`;
-
-        resultsEl.innerHTML = all.length ? all.map(item => `
-          <div class="card" data-az="${item.az}" data-id="${item.id}">
+      // 3. Render Detailed Telemetry Cards
+      resultsEl.innerHTML = allDetectedItems.length ? allDetectedItems.map(item => {
+        const isSel = item.id === lockedTargetId;
+        return `
+          <div class="card ${isSel ? "locked-card" : ""}" data-az="${item.az}" data-id="${item.id}">
             <div class="card-top">
-              <span>${item.type}</span>
-              <span>${item.timeStatus}</span>
+              <span>${item.typeLabel}</span>
+              <button class="lock-action-btn ${isSel ? "is-locked" : ""}" onclick="selectTargetLock('${item.id}')">
+                ${isSel ? "🎯 LOCKED" : "⊕ LOCK TARGET"}
+              </button>
             </div>
             <div class="title">${item.name}</div>
+            <div style="font-size:0.74rem;color:var(--amber);font-weight:bold;margin-bottom:6px;">${item.timeStatus}</div>
             <div class="route-banner">
               <span>ROUTE: ${item.route}</span>
+              <span>${item.squawk}</span>
             </div>
             <div class="grid">
               <div>
-                <div class="lbl">LOOK DIRECTION</div>
+                <div class="lbl">SKY POSITION</div>
                 <div class="val">${item.look}</div>
               </div>
               <div>
-                <div class="lbl">RANGE</div>
+                <div class="lbl">DISTANCE & CLIMB</div>
                 <div class="val">${item.distText}</div>
               </div>
               <div>
@@ -725,9 +977,25 @@
               <span>AZIMUTH: ${item.az}°</span>
             </div>
           </div>
-        `).join("") : `<div class="card" style="text-align:center;">NO MOVING TARGETS IN LOCAL SECTOR RIGHT NOW.</div>`;
+        `;
+      }).join("") : `<div class="card" style="text-align:center;">NO MOVING TARGETS WITHIN 140 KM RIGHT NOW.</div>`;
 
-        updateRadarHeading(currentHeading);
+      updateRadarHeading(currentHeading);
+    }
+
+    function runScan() {
+      startInterstellarDrone();
+      initCompass();
+      statusEl.textContent = "SCANNING 140 KM APPROACH SECTOR & ORBITS...";
+      navigator.geolocation.getCurrentPosition(async pos => {
+        const { latitude: lat, longitude: lon } = pos.coords;
+        const [planes, sats] = await Promise.all([fetchPlanes(lat, lon), fetchSatellites(lat, lon)]);
+        allDetectedItems = [...planes, ...sats];
+
+        if (allDetectedItems.length > 0) playCosmicOrganChord();
+
+        statusEl.textContent = `ACTIVE SECTOR: ${planes.length} AIRCRAFT // ${sats.length} SATELLITES`;
+        renderAllUI();
       }, err => {
         statusEl.textContent = "GPS ERROR: " + err.message;
       }, { enableHighAccuracy: true });
