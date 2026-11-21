@@ -3,37 +3,44 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>SkyWatch 3D — Night Sky Radar</title>
+  <title>SKYWATCH // MATRIX RADAR</title>
   <script src="https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js"></script>
   <style>
     :root {
-      --bg: #000000;
-      --glass: rgba(10, 14, 24, 0.68);
-      --border: rgba(56, 189, 248, 0.22);
-      --cyan: #38bdf8;
-      --emerald: #34d399;
-      --amber: #fbbf24;
-      --purple: #c084fc;
-      --text: #f8fafc;
-      --muted: #94a3b8;
+      --bg: #000400;
+      --panel: rgba(0, 18, 4, 0.82);
+      --green: #00ff41;
+      --green-dim: rgba(0, 255, 65, 0.25);
+      --green-dark: #003b00;
+      --amber: #ffb000;
+      --cyan: #00f0ff;
+      --font: "Courier New", Courier, monospace;
+    }
+    body.day-mode {
+      --bg: #04131a;
+      --panel: rgba(6, 28, 38, 0.85);
+      --green: #38bdf8;
+      --green-dim: rgba(56, 189, 248, 0.28);
+      --green-dark: #0c4a6e;
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
       margin: 0;
       padding: 0;
       background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--green);
+      font-family: var(--font);
       min-height: 100vh;
       overflow-x: hidden;
+      transition: background 0.4s ease, color 0.4s ease;
     }
-    /* 3D Live Space Canvas */
-    #spaceCanvas {
+    #matrixCanvas {
       position: fixed;
       inset: 0;
       width: 100%;
       height: 100%;
       z-index: 0;
+      opacity: 0.28;
       pointer-events: none;
     }
     .app {
@@ -41,447 +48,384 @@
       z-index: 1;
       max-width: 540px;
       margin: 0 auto;
-      padding: 18px 16px 60px;
+      padding: 16px 14px 60px;
     }
     header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border-bottom: 1px solid var(--green-dim);
+      padding-bottom: 10px;
       margin-bottom: 14px;
     }
     h1 {
       margin: 0;
-      font-size: 1.4rem;
-      letter-spacing: -0.02em;
-      background: linear-gradient(90deg, #ffffff, #38bdf8, #c084fc);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-size: 1.25rem;
+      letter-spacing: 0.08em;
+      text-shadow: 0 0 10px var(--green);
     }
-    .sub { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
-    .live-pill {
-      font-size: 0.7rem;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 99px;
-      background: rgba(52, 211, 153, 0.14);
-      color: var(--emerald);
-      border: 1px solid rgba(52, 211, 153, 0.35);
-      display: flex;
-      align-items: center;
-      gap: 6px;
+    .sub { font-size: 0.72rem; opacity: 0.8; margin-top: 2px; }
+    .mode-btn {
+      background: var(--panel);
+      color: var(--green);
+      border: 1px solid var(--green);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-family: var(--font);
+      font-size: 0.75rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--green-dim);
     }
-    .dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--emerald);
-      box-shadow: 0 0 8px var(--emerald);
-      animation: pulse 1.6s infinite;
-    }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-    /* 3D Holographic Compass & Radar Stage */
-    .radar-stage {
-      background: var(--glass);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid var(--border);
-      border-radius: 22px;
-      padding: 16px;
+    /* ATC Radar Scope */
+    .radar-box {
+      background: var(--panel);
+      border: 1px solid var(--green);
+      border-radius: 14px;
+      padding: 14px;
       margin-bottom: 14px;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.85), inset 0 0 24px rgba(56, 189, 248, 0.06);
-      perspective: 700px;
+      box-shadow: 0 0 25px var(--green-dim), inset 0 0 20px var(--green-dim);
     }
-    .radar-top {
+    .radar-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      font-size: 0.78rem;
       margin-bottom: 10px;
     }
-    .heading-readout {
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: var(--cyan);
-    }
-    .sensor-badge {
-      font-size: 0.7rem;
-      color: var(--muted);
-      background: rgba(255,255,255,0.05);
-      padding: 3px 8px;
-      border-radius: 8px;
-    }
-    .radar-wrapper {
-      width: 190px;
-      height: 190px;
-      margin: 6px auto 10px;
+    .scope-container {
+      width: 220px;
+      height: 220px;
+      margin: 0 auto;
       position: relative;
-      transform: rotateX(24deg);
-      transform-style: preserve-3d;
+      border-radius: 50%;
+      border: 2px solid var(--green);
+      background: radial-gradient(circle, var(--green-dim) 0%, #000000 75%);
+      overflow: hidden;
+      box-shadow: 0 0 20px var(--green-dim);
     }
-    .radar-ring {
+    /* Rotating compass ring */
+    .compass-ring {
+      position: absolute;
+      inset: 0;
+      transition: transform 0.12s linear;
+    }
+    .compass-ring::before, .compass-ring::after {
+      content: "";
+      position: absolute;
+      background: var(--green-dim);
+    }
+    .compass-ring::before { top: 0; bottom: 0; left: 50%; width: 1px; }
+    .compass-ring::after { left: 0; right: 0; top: 50%; height: 1px; }
+    .ring-mid {
+      position: absolute;
+      inset: 25%;
+      border-radius: 50%;
+      border: 1px dashed var(--green-dim);
+    }
+    .ring-inner {
+      position: absolute;
+      inset: 50%;
+      border-radius: 50%;
+      border: 1px dotted var(--green-dim);
+    }
+    .dir {
+      position: absolute;
+      font-size: 0.75rem;
+      font-weight: bold;
+    }
+    .d-n { top: 4px; left: 50%; transform: translateX(-50%); color: #ff3b30; text-shadow: 0 0 6px #ff3b30; }
+    .d-s { bottom: 4px; left: 50%; transform: translateX(-50%); }
+    .d-e { right: 6px; top: 50%; transform: translateY(-50%); }
+    .d-w { left: 6px; top: 50%; transform: translateY(-50%); }
+
+    /* Radar Sweep Beam */
+    .sweep {
       position: absolute;
       inset: 0;
       border-radius: 50%;
-      border: 1.5px solid rgba(56, 189, 248, 0.35);
-      background: radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, rgba(0, 0, 0, 0.75) 72%);
-      box-shadow: 0 0 25px rgba(56, 189, 248, 0.15);
-      transition: transform 0.1s linear;
-    }
-    .radar-ring::before, .radar-ring::after {
-      content: "";
-      position: absolute;
-      background: rgba(56, 189, 248, 0.18);
-    }
-    .radar-ring::before { top: 0; bottom: 0; left: 50%; width: 1px; }
-    .radar-ring::after { left: 0; right: 0; top: 50%; height: 1px; }
-    .inner-ring {
-      position: absolute;
-      inset: 28%;
-      border-radius: 50%;
-      border: 1px dashed rgba(56, 189, 248, 0.25);
-    }
-    .cardinal {
-      position: absolute;
-      font-size: 0.72rem;
-      font-weight: 800;
-      color: var(--muted);
-    }
-    .c-n { top: 6px; left: 50%; transform: translateX(-50%); color: #f43f5e; }
-    .c-s { bottom: 6px; left: 50%; transform: translateX(-50%); }
-    .c-e { right: 8px; top: 50%; transform: translateY(-50%); }
-    .c-w { left: 8px; top: 50%; transform: translateY(-50%); }
-    .phone-cone {
-      position: absolute;
-      top: 0; left: 50%;
-      width: 64px; height: 95px;
-      transform: translateX(-50%);
-      background: linear-gradient(to bottom, rgba(52, 211, 153, 0.32), transparent);
-      clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+      background: conic-gradient(from 0deg, rgba(0, 255, 65, 0.35) 0deg, transparent 65deg);
+      animation: radarSpin 4s linear infinite;
       pointer-events: none;
     }
+    @keyframes radarSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    /* Human Observer in Center */
+    .observer {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+    }
+    .fov-cone {
+      position: absolute;
+      bottom: 50%;
+      width: 54px;
+      height: 110px;
+      background: linear-gradient(to top, rgba(0, 255, 65, 0.32), transparent);
+      clip-path: polygon(50% 100%, 0% 0%, 100% 0%);
+    }
+    .human-icon {
+      width: 22px; height: 22px;
+      background: #000;
+      border: 1.5px solid var(--green);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      box-shadow: 0 0 10px var(--green);
+    }
+
     .blip {
       position: absolute;
       width: 9px; height: 9px;
       border-radius: 50%;
       transform: translate(-50%, -50%);
-      box-shadow: 0 0 10px currentColor;
-    }
-
-    /* Manual calibration fallback slider */
-    .cal-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 8px;
-      font-size: 0.74rem;
-      color: var(--muted);
-    }
-    .cal-row input[type="range"] {
-      flex: 1;
-      accent-color: var(--cyan);
+      box-shadow: 0 0 8px currentColor;
+      z-index: 4;
     }
 
     .controls {
       display: flex;
       gap: 8px;
-      margin-bottom: 14px;
+      margin-bottom: 12px;
     }
-    button {
+    .scan-btn {
       flex: 1;
-      background: linear-gradient(135deg, #0284c7, #1d4ed8);
-      color: #fff;
-      border: 1px solid rgba(125, 211, 252, 0.35);
-      padding: 13px 16px;
-      border-radius: 14px;
+      background: var(--green-dark);
+      color: var(--green);
+      border: 1px solid var(--green);
+      padding: 12px;
+      border-radius: 8px;
+      font-family: var(--font);
       font-size: 0.95rem;
-      font-weight: 700;
+      font-weight: bold;
       cursor: pointer;
-      box-shadow: 0 6px 20px rgba(2, 132, 199, 0.3);
-      transition: transform 0.15s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      box-shadow: 0 0 14px var(--green-dim);
     }
-    button:active { transform: scale(0.97); }
-    button.auto-btn {
-      flex: 0 0 auto;
-      background: rgba(15, 23, 42, 0.85);
-      border-color: rgba(148, 163, 184, 0.25);
-      font-size: 0.82rem;
-      box-shadow: none;
-    }
-    button.auto-btn.active {
-      border-color: var(--emerald);
-      color: var(--emerald);
-    }
+    .scan-btn:active { transform: scale(0.98); }
 
     .status {
       text-align: center;
-      font-size: 0.82rem;
-      color: var(--muted);
-      margin-bottom: 14px;
+      font-size: 0.78rem;
+      margin-bottom: 12px;
+      opacity: 0.9;
     }
 
-    /* Glass Object Cards */
+    /* Telemetry Cards */
     .card {
-      background: var(--glass);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 15px;
-      margin-bottom: 12px;
-      transition: transform 0.2s ease, border-color 0.2s ease;
-      animation: floatUp 0.4s ease;
+      background: var(--panel);
+      border: 1px solid var(--green-dim);
+      border-left: 4px solid var(--green);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 10px;
+      animation: glitchIn 0.25s ease;
     }
-    @keyframes floatUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+    @keyframes glitchIn {
+      0% { opacity: 0; transform: translateX(-6px); }
+      100% { opacity: 1; transform: translateX(0); }
     }
     .card.aligned {
-      border-color: var(--emerald);
-      box-shadow: 0 0 22px rgba(52, 211, 153, 0.22);
+      border-color: var(--green);
+      box-shadow: 0 0 18px var(--green-dim);
+      background: rgba(0, 45, 10, 0.88);
     }
     .card-top {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      font-size: 0.72rem;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+    .route-banner {
+      background: rgba(0, 255, 65, 0.1);
+      border: 1px dashed var(--green-dim);
+      padding: 6px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: bold;
       margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
     }
-    .badge {
-      font-size: 0.7rem;
-      font-weight: 800;
-      padding: 3px 9px;
-      border-radius: 99px;
-      letter-spacing: 0.04em;
-    }
-    .b-plane { background: rgba(56, 189, 248, 0.18); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.35); }
-    .b-cargo { background: rgba(192, 132, 252, 0.18); color: #d8b4fe; border: 1px solid rgba(192, 132, 252, 0.35); }
-    .b-sat { background: rgba(52, 211, 153, 0.18); color: #6ee7b7; border: 1px solid rgba(52, 211, 153, 0.35); }
-    .tag { font-size: 0.76rem; font-weight: 700; color: var(--amber); }
-    .title { font-size: 1.08rem; font-weight: 700; margin-bottom: 8px; }
+    .title { font-size: 1.05rem; font-weight: bold; margin-bottom: 4px; }
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      padding-top: 9px;
-      border-top: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .m-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
-    .m-val { font-size: 0.86rem; font-weight: 600; margin-top: 2px; }
-    .align-bar {
-      margin-top: 10px;
+      gap: 8px;
+      font-size: 0.78rem;
+      border-top: 1px solid var(--green-dim);
       padding-top: 8px;
-      border-top: 1px dashed rgba(255, 255, 255, 0.08);
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--cyan);
+    }
+    .lbl { opacity: 0.65; font-size: 0.68rem; text-transform: uppercase; }
+    .val { font-weight: bold; margin-top: 2px; }
+    .align-footer {
+      margin-top: 8px;
+      padding-top: 6px;
+      border-top: 1px dotted var(--green-dim);
+      font-size: 0.78rem;
+      font-weight: bold;
       display: flex;
       justify-content: space-between;
     }
   </style>
 </head>
 <body>
-  <canvas id="spaceCanvas"></canvas>
+  <canvas id="matrixCanvas"></canvas>
 
   <div class="app">
     <header>
       <div>
-        <h1>🌌 SkyWatch 3D</h1>
-        <div class="sub">Night Sky Moving Object Radar</div>
+        <h1>[SKYWATCH_RADAR]</h1>
+        <div class="sub" id="modeLabel">SYS.MODE // NIGHT OPTICS (ALL OBJECTS)</div>
       </div>
-      <div class="live-pill"><span class="dot"></span> NIGHT MODE</div>
+      <button class="mode-btn" id="modeToggle">☀️ DAY MODE</button>
     </header>
 
-    <div class="radar-stage">
-      <div class="radar-top">
-        <div>
-          <div class="m-label">Your Facing Direction</div>
-          <div class="heading-readout" id="headingText">N (0°)</div>
-        </div>
-        <div class="sensor-badge" id="sensorStatus">Sensor: Tap Scan</div>
+    <div class="radar-box">
+      <div class="radar-header">
+        <span>HDG: <strong id="hdgVal">000° N</strong></span>
+        <span id="sensorTag">COMPASS: AUTO-LOCKING...</span>
       </div>
 
-      <div class="radar-wrapper">
-        <div class="phone-cone"></div>
-        <div class="radar-ring" id="radarDial">
-          <div class="inner-ring"></div>
-          <span class="cardinal c-n">N</span>
-          <span class="cardinal c-e">E</span>
-          <span class="cardinal c-s">S</span>
-          <span class="cardinal c-w">W</span>
+      <div class="scope-container">
+        <div class="sweep"></div>
+        <div class="observer">
+          <div class="fov-cone"></div>
+          <div class="human-icon">🧍</div>
+        </div>
+        <div class="compass-ring" id="compassRing">
+          <div class="ring-mid"></div>
+          <div class="ring-inner"></div>
+          <span class="dir d-n">N</span>
+          <span class="dir d-e">E</span>
+          <span class="dir d-s">S</span>
+          <span class="dir d-w">W</span>
           <div id="radarBlips"></div>
         </div>
-      </div>
-
-      <div class="cal-row">
-        <span>Manual Adjust:</span>
-        <input type="range" id="manualCompass" min="0" max="359" value="0" />
       </div>
     </div>
 
     <div class="controls">
-      <button id="scanBtn">🔭 Scan Night Sky</button>
-      <button id="autoBtn" class="auto-btn">⏱ Auto: OFF</button>
+      <button class="scan-btn" id="scanBtn">▶ INITIATE SKY SCAN</button>
+      <button class="mode-btn" id="autoBtn">AUTO: OFF</button>
     </div>
 
-    <div class="status" id="status">Tap Scan to detect jets, cargo planes & satellites overhead.</div>
+    <div class="status" id="status">READY. STAND OUTDOORS & INITIATE SCAN.</div>
     <div id="results"></div>
   </div>
 
   <script>
-    /* ================= 1. 3D DEEP SPACE & GALAXY STARFIELD ================= */
-    const canvas = document.getElementById("spaceCanvas");
+    /* ================= 1. MATRIX CODE RAIN CANVAS ================= */
+    const canvas = document.getElementById("matrixCanvas");
     const ctx = canvas.getContext("2d");
-    let stars = [];
-    let W, H;
+    let cols, drops;
+    const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ";
 
-    function resizeCanvas() {
-      W = canvas.width = window.innerWidth;
-      H = canvas.height = window.innerHeight;
-      stars = Array.from({ length: 160 }, () => ({
-        x: (Math.random() - 0.5) * W * 2,
-        y: (Math.random() - 0.5) * H * 2,
-        z: Math.random() * W,
-        hue: Math.random() > 0.8 ? 200 : (Math.random() > 0.85 ? 275 : 0)
-      }));
+    function initMatrix() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      cols = Math.floor(canvas.width / 16);
+      drops = Array(cols).fill(1);
     }
-    window.addEventListener("resize", resizeCanvas);
-    resizeCanvas();
+    window.addEventListener("resize", initMatrix);
+    initMatrix();
 
-    let nebulaAngle = 0;
-    function animateSpace() {
-      ctx.fillStyle = "#000000";
-      ctx.fillRect(0, 0, W, H);
-
-      // Subtle drifting galaxy glow
-      nebulaAngle += 0.0015;
-      const gx = W * 0.5 + Math.cos(nebulaAngle) * 60;
-      const gy = H * 0.25 + Math.sin(nebulaAngle) * 40;
-      const grad = ctx.createRadialGradient(gx, gy, 10, gx, gy, W * 0.75);
-      grad.addColorStop(0, "rgba(56, 189, 248, 0.09)");
-      grad.addColorStop(0.45, "rgba(139, 92, 246, 0.05)");
-      grad.addColorStop(1, "rgba(0, 0, 0, 0)");
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
-
-      // 3D Star warp motion
-      const cx = W / 2, cy = H / 2;
-      for (let s of stars) {
-        s.z -= 0.45;
-        if (s.z <= 1) {
-          s.z = W;
-          s.x = (Math.random() - 0.5) * W * 2;
-          s.y = (Math.random() - 0.5) * H * 2;
-        }
-        const sx = cx + (s.x / s.z) * cx;
-        const sy = cy + (s.y / s.z) * cy;
-        const size = Math.max(0.4, (1 - s.z / W) * 2.4);
-        const alpha = Math.min(1, (1 - s.z / W) * 1.2);
-        ctx.fillStyle = s.hue ? `hsla(${s.hue}, 85%, 78%, ${alpha})` : `rgba(255,255,255,${alpha})`;
-        ctx.beginPath();
-        ctx.arc(sx, sy, size, 0, Math.PI * 2);
-        ctx.fill();
+    let isDayMode = false;
+    function drawMatrix() {
+      ctx.fillStyle = isDayMode ? "rgba(4, 19, 26, 0.12)" : "rgba(0, 4, 0, 0.12)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = isDayMode ? "#38bdf8" : "#00ff41";
+      ctx.font = "14px monospace";
+      for (let i = 0; i < drops.length; i++) {
+        const text = chars[Math.floor(Math.random() * chars.length)];
+        ctx.fillText(text, i * 16, drops[i] * 16);
+        if (drops[i] * 16 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+        drops[i]++;
       }
-      requestAnimationFrame(animateSpace);
     }
-    animateSpace();
+    setInterval(drawMatrix, 45);
 
-    /* ================= 2. ANDROID & IOS TRUE NORTH COMPASS ================= */
-    const headingText = document.getElementById("headingText");
-    const radarDial = document.getElementById("radarDial");
-    const sensorStatus = document.getElementById("sensorStatus");
-    const manualSlider = document.getElementById("manualCompass");
+    /* ================= 2. DAY / NIGHT MODE SWITCH ================= */
+    const modeToggle = document.getElementById("modeToggle");
+    const modeLabel = document.getElementById("modeLabel");
+    modeToggle.addEventListener("click", () => {
+      isDayMode = !isDayMode;
+      document.body.classList.toggle("day-mode", isDayMode);
+      modeToggle.textContent = isDayMode ? "🌙 NIGHT MODE" : "☀️ DAY MODE";
+      modeLabel.textContent = isDayMode
+        ? "SYS.MODE // DAYLIGHT (AIRCRAFT ONLY)"
+        : "SYS.MODE // NIGHT OPTICS (ALL OBJECTS)";
+      runScan();
+    });
+
+    /* ================= 3. AUTOMATIC ANDROID COMPASS ================= */
+    const compassRing = document.getElementById("compassRing");
+    const hdgVal = document.getElementById("hdgVal");
+    const sensorTag = document.getElementById("sensorTag");
     let currentHeading = 0;
-    let sensorActive = false;
+    let absLocked = false;
 
     function toCompass(deg) {
       const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
       return dirs[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
     }
 
-    function applyHeading(deg) {
+    function updateRadarHeading(deg, source) {
       currentHeading = Math.round(((deg % 360) + 360) % 360);
-      headingText.textContent = `${toCompass(currentHeading)} (${currentHeading}°)`;
-      radarDial.style.transform = `rotate(${-currentHeading}deg)`;
-      manualSlider.value = currentHeading;
+      hdgVal.textContent = `${String(currentHeading).padStart(3, "0")}° ${toCompass(currentHeading)}`;
+      compassRing.style.transform = `rotate(${-currentHeading}deg)`;
+      if (source) sensorTag.textContent = source;
 
       document.querySelectorAll(".card[data-az]").forEach(card => {
         const targetAz = Number(card.dataset.az);
         const diff = ((targetAz - currentHeading + 540) % 360) - 180;
-        const hint = card.querySelector(".align-text");
-        if (Math.abs(diff) <= 14) {
+        const alignEl = card.querySelector(".align-text");
+        if (Math.abs(diff) <= 15) {
           card.classList.add("aligned");
-          hint.textContent = "🎯 ALIGNED — Look up in the night sky!";
-          hint.style.color = "#34d399";
+          alignEl.textContent = "🎯 TARGET LOCKED — LOOK UP NOW!";
         } else {
           card.classList.remove("aligned");
-          hint.textContent = diff > 0 ? `↪ Turn right ${Math.abs(diff)}°` : `↩ Turn left ${Math.abs(diff)}°`;
-          hint.style.color = "#38bdf8";
+          alignEl.textContent = diff > 0 ? `↪ TURN RIGHT ${Math.abs(diff)}°` : `↩ TURN LEFT ${Math.abs(diff)}°`;
         }
       });
     }
 
-    manualSlider.addEventListener("input", e => {
-      sensorStatus.textContent = "Sensor: Manual";
-      applyHeading(Number(e.target.value));
-    });
-
-    function startAndroidAndIosCompass() {
-      if (sensorActive) return;
-
-      // Method A: Android Modern AbsoluteOrientationSensor API
-      if ("AbsoluteOrientationSensor" in window) {
-        try {
-          const sensor = new AbsoluteOrientationSensor({ frequency: 30 });
-          sensor.addEventListener("reading", () => {
-            const [x, y, z, w] = sensor.quaternion;
-            const siny = 2 * (w * z + x * y);
-            const cosy = 1 - 2 * (y * y + z * z);
-            const yaw = Math.atan2(siny, cosy) * (180 / Math.PI);
-            sensorActive = true;
-            sensorStatus.textContent = "Sensor: Android 3D Magnetometer";
-            applyHeading((360 - yaw) % 360);
-          });
-          sensor.start();
-          return;
-        } catch (e) {}
-      }
-
-      // Method B: Android Chrome deviceorientationabsolute
-      const handleAbs = (e) => {
+    function autoStartCompass() {
+      // 1. Android Chrome True North (deviceorientationabsolute)
+      window.addEventListener("deviceorientationabsolute", (e) => {
         if (e.alpha !== null) {
-          sensorActive = true;
-          sensorStatus.textContent = "Sensor: Android Absolute";
-          applyHeading(360 - e.alpha);
+          absLocked = true;
+          updateRadarHeading(360 - e.alpha, "COMPASS: MAGNETIC NORTH");
         }
-      };
+      }, true);
 
-      // Method C: iOS webkitCompassHeading or relative fallback
-      const handleRel = (e) => {
-        if (sensorActive) return;
+      // 2. Fallback standard orientation (iOS webkitCompassHeading or Android relative)
+      window.addEventListener("deviceorientation", (e) => {
+        if (absLocked) return;
         if (typeof e.webkitCompassHeading === "number") {
-          sensorStatus.textContent = "Sensor: iOS Compass";
-          applyHeading(e.webkitCompassHeading);
+          updateRadarHeading(e.webkitCompassHeading, "COMPASS: IOS NORTH");
         } else if (e.alpha !== null) {
-          sensorStatus.textContent = "Sensor: Gyro (Adjust N if needed)";
-          applyHeading(360 - e.alpha);
+          updateRadarHeading(360 - e.alpha, "COMPASS: GYRO ACTIVE");
         }
-      };
-
-      if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
-        DeviceOrientationEvent.requestPermission().then(res => {
-          if (res === "granted") {
-            window.addEventListener("deviceorientation", handleRel, true);
-          }
-        }).catch(() => {});
-      } else {
-        window.addEventListener("deviceorientationabsolute", handleAbs, true);
-        window.addEventListener("deviceorientation", handleRel, true);
-      }
+      }, true);
     }
+    autoStartCompass();
 
-    /* ================= 3. SKY DATA ENGINE (JETS, CARGO & SATELLITES) ================= */
+    /* ================= 4. FLIGHT ROUTES, TIMES & SATELLITES ================= */
     const PROXY_URL = "https://skywatch-proxy.itzsahanaj-0671.workers.dev";
     const statusEl = document.getElementById("status");
     const resultsEl = document.getElementById("results");
     const radarBlips = document.getElementById("radarBlips");
+    const routeCache = {};
 
     function getBearingAndDist(lat1, lon1, lat2, lon2) {
       const R = 6371;
@@ -496,106 +440,79 @@
       return { dist, brng: Math.round(brng) };
     }
 
-    function isCargoAircraft(flight, typeCode) {
-      const f = (flight || "").toUpperCase();
-      const t = (typeCode || "").toUpperCase();
-      const cargoPrefixes = ["FDX", "UPS", "CLX", "GTI", "ABW", "GEC", "BOX", "DHL", "ATN", "QTR8", "ETH3", "SIA7", "CPA0", "CKK", "CSS"];
-      const cargoTypes = ["B744", "B748", "B77L", "MD11", "A306", "B763", "B752", "A332", "IL76", "AN12"];
-      return cargoPrefixes.some(p => f.startsWith(p)) || (cargoTypes.includes(t) && f.length > 0 && /\d{3,4}$/.test(f));
+    async function lookupFlightRoute(callsign) {
+      const clean = (callsign || "").trim().toUpperCase();
+      if (!clean || clean === "UNKNOWN") return "LOCAL / UNLISTED";
+      if (routeCache[clean]) return routeCache[clean];
+      try {
+        const res = await fetch(`https://hexdb.io/api/v1/route/icao/${clean}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.route) {
+            routeCache[clean] = data.route.replace("-", " ➔ ");
+            return routeCache[clean];
+          }
+        }
+      } catch (e) {}
+      routeCache[clean] = "EN ROUTE (LIVE ADS-B)";
+      return routeCache[clean];
     }
 
-    function analyzeApproach(brngFromUser, trackDeg, distKm, speedKmh) {
-      if (trackDeg === undefined || trackDeg === null || speedKmh < 50) {
-        return { label: "In Sky", route: "Trajectory tracking..." };
-      }
+    function formatTimeWindow(distKm, speedKmh, trackDeg, brngFromUser) {
+      const now = new Date();
+      const fmt = (d) => d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      if (!speedKmh || speedKmh < 60) return `DETECTED ${fmt(now)}`;
+
       const bearingToUser = (brngFromUser + 180) % 360;
       const angleDiff = Math.abs(((trackDeg - bearingToUser + 540) % 360) - 180);
-      const fromDir = toCompass((trackDeg + 180) % 360);
-      const toDir = toCompass(trackDeg);
-      const route = `${fromDir} → ${toDir} (${Math.round(trackDeg)}°)`;
+      const mins = Math.max(1, Math.round((distKm / speedKmh) * 60));
 
-      if (distKm <= 10) return { label: "🔥 Directly Overhead", route };
-      if (angleDiff <= 55) {
-        const mins = Math.max(1, Math.round((distKm / speedKmh) * 60));
-        return { label: `⏳ Approaching (~${mins} min)`, route };
+      if (distKm <= 10) return `OVERHEAD NOW (${fmt(now)})`;
+      if (angleDiff <= 60) {
+        const eta = new Date(now.getTime() + mins * 60000);
+        return `APPROACH IN ~${mins}m (ETA ${fmt(eta)})`;
       }
-      if (angleDiff >= 125) return { label: "↗ Moving Away", route };
-      return { label: "↔ Crossing Sky", route };
+      const passed = new Date(now.getTime() - mins * 60000);
+      return `PASSED ~${mins}m AGO (${fmt(passed)})`;
     }
 
     async function fetchPlanes(lat, lon) {
-      const radiusNm = 30; // ~55 km night approach window
+      const radiusNm = 35; // ~65 km radar range
       const url = `${PROXY_URL}/?type=planes&lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}&radius=${radiusNm}`;
       const res = await fetch(url);
       if (!res.ok) return [];
       const data = await res.json();
-      return (data.ac || [])
-        .filter(p => p.lat && p.lon && p.alt_baro !== "ground")
-        .map(p => {
-          const { dist, brng } = getBearingAndDist(lat, lon, p.lat, p.lon);
-          const altFt = typeof p.alt_baro === "number" ? p.alt_baro : 0;
-          const speedKmh = Math.round((p.gs || 0) * 1.852);
-          const callsign = (p.flight || p.r || "Unknown").trim();
-          const cargo = isCargoAircraft(callsign, p.t);
-          const { label, route } = analyzeApproach(brng, p.track, dist, speedKmh);
-          const model = p.t ? ` (${p.t})` : "";
+      const raw = (data.ac || []).filter(p => p.lat && p.lon && p.alt_baro !== "ground");
 
-          return {
-            kind: cargo ? "cargo" : "plane",
-            badgeText: cargo ? "📦 CARGO JET" : "✈️ AIRCRAFT",
-            badgeClass: cargo ? "b-cargo" : "b-plane",
-            color: cargo ? "#c084fc" : "#38bdf8",
-            name: `${callsign}${model}`,
-            tag: label,
-            az: brng,
-            radarDistPct: Math.min(44, (dist / 55) * 44),
-            look: `${toCompass(brng)} (${brng}°)`,
-            distText: `${dist.toFixed(1)} km away`,
-            route,
-            speedAlt: `${speedKmh} km/h • ${altFt.toLocaleString()} ft`,
-            sortKey: dist
-          };
-        })
-        .sort((a, b) => a.sortKey - b.sortKey);
-    }
+      const enriched = await Promise.all(raw.map(async p => {
+        const { dist, brng } = getBearingAndDist(lat, lon, p.lat, p.lon);
+        const callsign = (p.flight || p.r || "UNKNOWN").trim();
+        const routeStr = await lookupFlightRoute(callsign);
+        const altFt = typeof p.alt_baro === "number" ? p.alt_baro : 0;
+        const speedKmh = Math.round((p.gs || 0) * 1.852);
+        const timeStatus = formatTimeWindow(dist, speedKmh, p.track || 0, brng);
+        const isCargo = ["FDX", "UPS", "CLX", "GTI", "DHL", "BOX", "ATN"].some(c => callsign.startsWith(c));
 
-      async function fetchPlanes(lat, lon) {
-      const radiusNm = 30; // ~55 km night approach window
-      const url = `${PROXY_URL}/?type=planes&lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}&radius=${radiusNm}`;
-      const res = await fetch(url);
-      if (!res.ok) return [];
-      const data = await res.json();
-      return (data.ac || [])
-        .filter(p => p.lat && p.lon && p.alt_baro !== "ground")
-        .map(p => {
-          const { dist, brng } = getBearingAndDist(lat, lon, p.lat, p.lon);
-          const altFt = typeof p.alt_baro === "number" ? p.alt_baro : 0;
-          const speedKmh = Math.round((p.gs || 0) * 1.852);
-          const callsign = (p.flight || p.r || "Unknown").trim();
-          const cargo = isCargoAircraft(callsign, p.t);
-          const { label, route } = analyzeApproach(brng, p.track, dist, speedKmh);
-          const model = p.t ? ` (${p.t})` : "";
-
-          return {
-            kind: cargo ? "cargo" : "plane",
-            badgeText: cargo ? "📦 CARGO JET" : "✈️ AIRCRAFT",
-            badgeClass: cargo ? "b-cargo" : "b-plane",
-            color: cargo ? "#c084fc" : "#38bdf8",
-            name: `${callsign}${model}`,
-            tag: label,
-            az: brng,
-            radarDistPct: Math.min(44, (dist / 55) * 44),
-            look: `${toCompass(brng)} (${brng}°)`,
-            distText: `${dist.toFixed(1)} km away`,
-            route,
-            speedAlt: `${speedKmh} km/h • ${altFt.toLocaleString()} ft`,
-            sortKey: dist
-          };
-        })
-        .sort((a, b) => a.sortKey - b.sortKey);
+        return {
+          type: isCargo ? "📦 CARGO AIRCRAFT" : "✈️ COMMERCIAL JET",
+          color: isCargo ? "#ffb000" : "#00ff41",
+          name: `${callsign}${p.t ? ` [${p.t}]` : ""}`,
+          route: routeStr,
+          timeStatus,
+          az: brng,
+          radarDistPct: Math.min(45, (dist / 65) * 45),
+          look: `${toCompass(brng)} (${brng}°)`,
+          distText: `${dist.toFixed(1)} KM`,
+          headingText: `${toCompass(p.track || 0)} (${Math.round(p.track || 0)}°)`,
+          speedAlt: `${speedKmh} KM/H • ${altFt.toLocaleString()} FT`,
+          sortKey: dist
+        };
+      }));
+      return enriched.sort((a, b) => a.sortKey - b.sortKey);
     }
 
     async function fetchSatellites(lat, lon) {
+      if (isDayMode) return []; // Hidden in Daylight mode
       const res = await fetch(`${PROXY_URL}/?type=sats`);
       if (!res.ok) return [];
       const txt = await res.text();
@@ -605,7 +522,7 @@
       const gmst = satellite.gstime(now);
       const gmstLater = satellite.gstime(later);
       const observerGd = { longitude: satellite.degreesToRadians(lon), latitude: satellite.degreesToRadians(lat), height: 0.1 };
-      const overhead = [];
+      const sats = [];
 
       for (let i = 0; i < lines.length - 2; i += 3) {
         const satrec = satellite.twoline2satrec(lines[i+1], lines[i+2]);
@@ -616,107 +533,102 @@
         const lookNow = satellite.ecfToLookAngles(observerGd, satellite.eciToEcf(posNow.position, gmst));
         const elevDeg = satellite.radiansToDegrees(lookNow.elevation);
 
-        if (elevDeg > 15) {
+        if (elevDeg > 10) {
           const azNow = Math.round(satellite.radiansToDegrees(lookNow.azimuth));
           const lookNext = satellite.ecfToLookAngles(observerGd, satellite.eciToEcf(posNext.position, gmstLater));
           const azNext = Math.round(satellite.radiansToDegrees(lookNext.azimuth));
-          const elevNext = satellite.radiansToDegrees(lookNext.elevation);
 
-          overhead.push({
-            kind: "sat",
-            badgeText: "🛰️ SATELLITE",
-            badgeClass: "b-sat",
-            color: "#34d399",
+          sats.push({
+            type: "🛰️ ORBITAL SATELLITE",
+            color: "#00f0ff",
             name: lines[i],
-            tag: elevNext > elevDeg ? "⏳ Rising Overhead" : "↘ Moving Across Sky",
+            route: `ORBIT PASS: ${toCompass(azNow)} ➔ ${toCompass(azNext)}`,
+            timeStatus: `VISIBLE ARC (${Math.round(elevDeg)}° ELEV)`,
             az: azNow,
-            radarDistPct: Math.max(8, ((90 - elevDeg) / 75) * 44),
-            look: `${toCompass(azNow)} (${azNow}°) • ${Math.round(elevDeg)}° high`,
-            distText: `${Math.round(lookNow.rangeSat)} km orbit`,
-            route: `${toCompass(azNow)} → ${toCompass(azNext)}`,
-            speedAlt: `~27,500 km/h • LEO`,
+            radarDistPct: Math.max(8, ((90 - elevDeg) / 80) * 45),
+            look: `${toCompass(azNow)} (${azNow}°)`,
+            distText: `${Math.round(lookNow.rangeSat)} KM`,
+            headingText: `AZ ${azNow}° ➔ ${azNext}°`,
+            speedAlt: `27,500 KM/H • LEO ORBIT`,
             sortKey: 90 - elevDeg
           });
         }
       }
-      return overhead.sort((a, b) => a.sortKey - b.sortKey).slice(0, 10);
-    }
-
-    function renderRadarBlips(items) {
-      radarBlips.innerHTML = items.map(item => {
-        const rad = (item.az - 90) * (Math.PI / 180);
-        const x = 50 + Math.cos(rad) * item.radarDistPct;
-        const y = 50 + Math.sin(rad) * item.radarDistPct;
-        return `<div class="blip" style="left:${x}%;top:${y}%;background:${item.color};color:${item.color};"></div>`;
-      }).join("");
+      return sats.sort((a, b) => a.sortKey - b.sortKey).slice(0, 12);
     }
 
     function runScan() {
-      startAndroidAndIosCompass();
-      statusEl.textContent = "Scanning night sky & orbital paths...";
+      statusEl.textContent = "SCANNING AIRSPACE & ORBITAL TELEMETRY...";
       navigator.geolocation.getCurrentPosition(async pos => {
         const { latitude: lat, longitude: lon } = pos.coords;
         const [planes, sats] = await Promise.all([fetchPlanes(lat, lon), fetchSatellites(lat, lon)]);
         const all = [...planes, ...sats];
 
-        renderRadarBlips(all);
-        statusEl.textContent = `Detected ${planes.length} aircraft & ${sats.length} satellites in your sky`;
+        radarBlips.innerHTML = all.map(item => {
+          const rad = (item.az - 90) * (Math.PI / 180);
+          const x = 50 + Math.cos(rad) * item.radarDistPct;
+          const y = 50 + Math.sin(rad) * item.radarDistPct;
+          return `<div class="blip" style="left:${x}%;top:${y}%;background:${item.color};color:${item.color};"></div>`;
+        }).join("");
+
+        statusEl.textContent = `LOCKED: ${planes.length} AIRCRAFT // ${sats.length} SATELLITES`;
 
         resultsEl.innerHTML = all.length ? all.map(item => `
           <div class="card" data-az="${item.az}">
             <div class="card-top">
-              <span class="badge ${item.badgeClass}">${item.badgeText}</span>
-              <span class="tag">${item.tag}</span>
+              <span>${item.type}</span>
+              <span>${item.timeStatus}</span>
             </div>
             <div class="title">${item.name}</div>
+            <div class="route-banner">
+              <span>ROUTE: ${item.route}</span>
+            </div>
             <div class="grid">
               <div>
-                <div class="m-label">Look Direction</div>
-                <div class="m-val">${item.look}</div>
+                <div class="lbl">LOOK DIRECTION</div>
+                <div class="val">${item.look}</div>
               </div>
               <div>
-                <div class="m-label">Distance</div>
-                <div class="m-val">${item.distText}</div>
+                <div class="lbl">RANGE</div>
+                <div class="val">${item.distText}</div>
               </div>
               <div>
-                <div class="m-label">Path & Heading</div>
-                <div class="m-val">${item.route}</div>
+                <div class="lbl">HEADING</div>
+                <div class="val">${item.headingText}</div>
               </div>
               <div>
-                <div class="m-label">Speed & Altitude</div>
-                <div class="m-val">${item.speedAlt}</div>
+                <div class="lbl">SPEED & ALTITUDE</div>
+                <div class="val">${item.speedAlt}</div>
               </div>
             </div>
-            <div class="align-bar">
-              <span class="align-text">Turn phone to align</span>
-              <span>Target: ${item.az}°</span>
+            <div class="align-footer">
+              <span class="align-text">ROTATE PHONE TO ALIGN</span>
+              <span>AZIMUTH: ${item.az}°</span>
             </div>
           </div>
-        `).join("") : "<div class='card' style='text-align:center;color:#94a3b8;'>No jets within 55 km or satellites above 15° right now.</div>";
+        `).join("") : `<div class="card" style="text-align:center;">NO MOVING TARGETS IN LOCAL SECTOR RIGHT NOW.</div>`;
 
-        applyHeading(currentHeading);
+        updateRadarHeading(currentHeading);
       }, err => {
-        statusEl.textContent = "GPS error: " + err.message;
+        statusEl.textContent = "GPS ERROR: " + err.message;
       }, { enableHighAccuracy: true });
     }
 
     document.getElementById("scanBtn").addEventListener("click", runScan);
 
-    // Auto-Refresh Toggle (15s live countdown)
     let autoTimer = null;
     const autoBtn = document.getElementById("autoBtn");
     autoBtn.addEventListener("click", () => {
       if (autoTimer) {
         clearInterval(autoTimer);
         autoTimer = null;
-        autoBtn.textContent = "⏱ Auto: OFF";
-        autoBtn.classList.remove("active");
+        autoBtn.textContent = "AUTO: OFF";
       } else {
         runScan();
         autoTimer = setInterval(runScan, 15000);
-        autoBtn.textContent = "⏱ Auto: 15s";
-        autoBtn.classList.add("active");
+        autoBtn.textContent = "AUTO: 15S";
       }
     });
   </script>
 </body>
+</html>
