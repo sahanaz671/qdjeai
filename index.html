@@ -60,26 +60,28 @@
     }
 
     async function fetchPlanes(lat, lon) {
-      const box = 2.5; // Wide test box (~275 km) before narrowing down
-      const url = `${PROXY_URL}/?type=planes&lamin=${lat-box}&lomin=${lon-box}&lamax=${lat+box}&lomax=${lon+box}`;
+      const radiusNm = 150; // ~275 km wide test radius (we'll shrink this once verified!)
+      const url = `${PROXY_URL}/?type=planes&lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}&radius=${radiusNm}`;
       log("Fetching planes via Worker...");
       const res = await fetch(url);
       log(`Planes status: ${res.status}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      log(`Raw planes returned: ${data.states ? data.states.length : 0}`);
-      if (!data.states) return [];
-      return data.states
-        .filter(s => !s[8] && s[5] && s[6])
-        .map(s => {
-          const { dist, brng } = getBearingAndDist(lat, lon, s[6], s[5]);
-          const altFt = Math.round((s[7] || 0) * 3.28084);
-          const speedKmh = Math.round((s[9] || 0) * 3.6);
+      const list = data.ac || [];
+      log(`Raw planes returned: ${list.length}`);
+
+      return list
+        .filter(p => p.lat && p.lon && p.alt_baro !== "ground")
+        .map(p => {
+          const { dist, brng } = getBearingAndDist(lat, lon, p.lat, p.lon);
+          const altFt = typeof p.alt_baro === "number" ? p.alt_baro : 0;
+          const speedKmh = Math.round((p.gs || 0) * 1.852);
+          const model = p.t ? ` (${p.t})` : "";
           return {
             type: "plane",
-            name: (s[1] || "Unknown Flight").trim(),
+            name: `${(p.flight || p.r || "Unknown Flight").trim()}${model}`,
             detail: `Look ${toCompass(brng)} (${brng}°) • ${dist} km away`,
-            sub: `Altitude: ${altFt.toLocaleString()} ft • Speed: ${speedKmh} km/h • Origin: ${s[2]}`,
+            sub: `Altitude: ${altFt.toLocaleString()} ft • Speed: ${speedKmh} km/h`,
             dist
           };
         })
