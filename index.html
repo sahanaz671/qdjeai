@@ -3,29 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>SKYWATCH // 3D INTERSTELLAR MATRIX</title>
+  <title>SKYWATCH PRO // 3D MATRIX RADAR</title>
   <script src="https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js"></script>
   <style>
     :root {
       --bg: #000301;
-      --panel: rgba(2, 16, 6, 0.84);
+      --panel: rgba(2, 16, 6, 0.86);
       --green: #00ff41;
       --green-bright: #d4ffe0;
-      --green-dim: rgba(0, 255, 65, 0.2);
+      --green-dim: rgba(0, 255, 65, 0.22);
       --green-dark: #00330c;
       --amber: #ffb000;
       --cyan: #00f0ff;
       --red: #ff3b30;
       --font: "Courier New", Courier, monospace;
-      --tilt-x: 0deg;
-      --tilt-y: 0deg;
     }
     body.day-mode {
       --bg: #03111a;
       --panel: rgba(5, 25, 38, 0.88);
       --green: #38bdf8;
       --green-bright: #e0f2fe;
-      --green-dim: rgba(56, 189, 248, 0.24);
+      --green-dim: rgba(56, 189, 248, 0.25);
       --green-dark: #0c4a6e;
     }
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -37,26 +35,13 @@
       font-family: var(--font);
       min-height: 100vh;
       overflow-x: hidden;
-      perspective: 1100px;
       transition: background 0.5s ease, color 0.5s ease;
     }
-    #matrixCanvas {
+    #spaceMatrixCanvas {
       position: fixed;
       inset: 0;
       width: 100%;
       height: 100%;
-      z-index: 0;
-      pointer-events: none;
-    }
-    .scanlines {
-      position: fixed;
-      inset: 0;
-      background: repeating-linear-gradient(
-        to bottom,
-        transparent 0px,
-        transparent 3px,
-        rgba(0, 0, 0, 0.22) 4px
-      );
       z-index: 0;
       pointer-events: none;
     }
@@ -66,7 +51,6 @@
       max-width: 560px;
       margin: 0 auto;
       padding: 14px 12px 72px;
-      transform-style: preserve-3d;
     }
     header {
       display: flex;
@@ -79,11 +63,11 @@
     }
     h1 {
       margin: 0;
-      font-size: 1.06rem;
+      font-size: 1.08rem;
       letter-spacing: 0.08em;
       text-shadow: 0 0 12px var(--green);
     }
-    .sub { font-size: 0.64rem; opacity: 0.85; margin-top: 2px; }
+    .sub { font-size: 0.65rem; opacity: 0.85; margin-top: 2px; }
     .hdr-btns { display: flex; gap: 6px; }
     .mode-btn {
       background: var(--panel);
@@ -98,19 +82,16 @@
       box-shadow: 0 0 10px var(--green-dim);
     }
 
-    /* 3D Floating Tactical Radar Console */
+    /* Flat, Sharp Tactical Radar Console */
     .radar-box {
       background: var(--panel);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
       border: 1px solid var(--green);
-      border-radius: 16px;
+      border-radius: 14px;
       padding: 12px;
       margin-bottom: 12px;
-      box-shadow: 0 16px 38px rgba(0, 0, 0, 0.85), 0 0 28px var(--green-dim), inset 0 0 24px var(--green-dim);
-      transform: rotateX(var(--tilt-x)) rotateY(var(--tilt-y)) translateZ(12px);
-      transform-style: preserve-3d;
-      transition: transform 0.14s ease-out;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.85), 0 0 24px var(--green-dim), inset 0 0 20px var(--green-dim);
     }
     .radar-header {
       display: flex;
@@ -129,8 +110,7 @@
       border: 2px solid var(--green);
       background: radial-gradient(circle, var(--green-dim) 0%, #000000 78%);
       overflow: hidden;
-      box-shadow: 0 0 28px var(--green-dim), inset 0 0 22px rgba(0, 255, 65, 0.18);
-      transform: translateZ(18px);
+      box-shadow: 0 0 25px var(--green-dim), inset 0 0 20px rgba(0, 255, 65, 0.16);
     }
     .compass-ring {
       position: absolute;
@@ -328,7 +308,7 @@
       letter-spacing: 0.03em;
     }
 
-    /* 3D Floating Telemetry Cards */
+    /* Crisp Flat Telemetry Cards */
     .card {
       background: var(--panel);
       backdrop-filter: blur(8px);
@@ -337,9 +317,8 @@
       border-radius: 10px;
       padding: 12px;
       margin-bottom: 10px;
-      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.75);
-      transform: rotateX(calc(var(--tilt-x) * 0.6)) rotateY(calc(var(--tilt-y) * 0.6)) translateZ(6px);
-      transition: transform 0.16s ease-out, border-color 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.75);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
     .card.locked-card {
       border-color: var(--red);
@@ -409,13 +388,12 @@
   </style>
 </head>
 <body>
-  <canvas id="matrixCanvas"></canvas>
-  <div class="scanlines"></div>
+  <canvas id="spaceMatrixCanvas"></canvas>
 
   <div class="app">
     <header>
       <div>
-        <h1>[SKYWATCH_3D // MATRIX]</h1>
+        <h1>[SKYWATCH_PRO // MATRIX]</h1>
         <div class="sub" id="modeLabel">140 KM APPROACH RADAR • NIGHT</div>
       </div>
       <div class="hdr-btns">
@@ -476,84 +454,131 @@
       <button class="mode-btn" id="autoBtn">AUTO: OFF</button>
     </div>
 
-    <div class="status" id="status">TAP ANYWHERE OR SCAN TO ENGAGE WARM SPACE AMBIENCE & 3D RADAR.</div>
+    <div class="status" id="status">TAP ANYWHERE OR SCAN TO ENGAGE INTERSTELLAR SYNTH & 3D SPACE RADAR.</div>
     <div id="results"></div>
   </div>
 
   <script>
-    /* ================= 1. 3-LAYER 3D PARALLAX MATRIX ENGINE ================= */
-    const canvas = document.getElementById("matrixCanvas");
+    /* ================= 1. REALISTIC 3D DEEP SPACE + CLASSIC MATRIX GRID ================= */
+    const canvas = document.getElementById("spaceMatrixCanvas");
     const ctx = canvas.getContext("2d");
-    const glyphs = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ∑∏∆Ω";
-    let layers = [];
+    const matrixChars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ";
+    let W, H, cols, drops;
+    let stars3D = [];
     let isDayMode = false;
-    let motionBoost = 0;
-    let compassParallaxX = 0;
+    let cameraYawOffset = 0;
+    let cameraPitchOffset = 0;
+    let frameTick = 0;
 
-    function initVisuals() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-      const configs = [
-        { count: Math.floor(canvas.width / 22), size: 9, speed: 0.7, alpha: 0.22, depth: 0.3 },
-        { count: Math.floor(canvas.width / 18), size: 12, speed: 1.5, alpha: 0.48, depth: 0.7 },
-        { count: Math.floor(canvas.width / 28), size: 16, speed: 2.6, alpha: 0.85, depth: 1.3 }
-      ];
-      layers = configs.map(cfg => ({
-        ...cfg,
-        drops: Array.from({ length: cfg.count }, () => ({
-          x: Math.random() * canvas.width,
-          y: Math.random() * canvas.height,
-          sp: cfg.speed * (0.8 + Math.random() * 0.5)
-        }))
+    function initCanvasScene() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+
+      // Classic crisp Matrix columns
+      cols = Math.floor(W / 16);
+      drops = Array.from({ length: cols }, () => Math.floor(Math.random() * (H / 16)));
+
+      // True 3D perspective starfield (x, y, z coordinates)
+      stars3D = Array.from({ length: 220 }, () => ({
+        x: (Math.random() - 0.5) * W * 2.2,
+        y: (Math.random() - 0.5) * H * 2.2,
+        z: Math.random() * W,
+        pz: W
       }));
     }
-    window.addEventListener("resize", initVisuals);
-    initVisuals();
+    window.addEventListener("resize", initCanvasScene);
+    initCanvasScene();
 
-    function renderFrame() {
-      ctx.fillStyle = isDayMode ? "rgba(3, 17, 26, 0.18)" : "rgba(0, 3, 1, 0.18)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    function draw3DSpaceAndMatrix() {
+      frameTick++;
 
-      motionBoost *= 0.92; // Smooth decay when device stops moving
+      // Smooth trail clear so both 3D star streaks & classic Matrix columns fade cleanly
+      ctx.fillStyle = isDayMode ? "rgba(3, 17, 26, 0.14)" : "rgba(0, 3, 1, 0.14)";
+      ctx.fillRect(0, 0, W, H);
 
-      for (let layer of layers) {
-        ctx.font = `bold ${layer.size}px monospace`;
-        for (let d of layer.drops) {
-          const drawX = ((d.x + compassParallaxX * layer.depth) % canvas.width + canvas.width) % canvas.width;
-          const char = glyphs[Math.floor(Math.random() * glyphs.length)];
+      // 1. Subtle 3D Nebula Core (shifts with compass & device tilt)
+      const nebX = W * 0.5 + cameraYawOffset * 0.8;
+      const nebY = H * 0.3 + cameraPitchOffset * 0.8;
+      const grad = ctx.createRadialGradient(nebX, nebY, 10, nebX, nebY, W * 0.65);
+      if (isDayMode) {
+        grad.addColorStop(0, "rgba(56, 189, 248, 0.06)");
+        grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      } else {
+        grad.addColorStop(0, "rgba(0, 255, 65, 0.05)");
+        grad.addColorStop(0.5, "rgba(0, 120, 255, 0.03)");
+        grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
 
-          // Bright white-green head glyph
-          ctx.fillStyle = isDayMode
-            ? `rgba(224, 242, 254, ${layer.alpha})`
-            : `rgba(212, 255, 224, ${layer.alpha})`;
-          ctx.fillText(char, drawX, d.y);
+      // 2. True 3D Perspective Starfield Tunnel
+      const cx = W / 2 + cameraYawOffset;
+      const cy = H / 2 + cameraPitchOffset;
+      for (let s of stars3D) {
+        s.pz = s.z;
+        s.z -= 1.8; // Forward warp speed through 3D space
+        if (s.z <= 1) {
+          s.x = (Math.random() - 0.5) * W * 2.2;
+          s.y = (Math.random() - 0.5) * H * 2.2;
+          s.z = W;
+          s.pz = W;
+        }
+        const sx = cx + (s.x / s.z) * (W * 0.5);
+        const sy = cy + (s.y / s.z) * (H * 0.5);
+        const px = cx + (s.x / s.pz) * (W * 0.5);
+        const py = cy + (s.y / s.pz) * (H * 0.5);
 
-          // Trailing glyph
-          const trail = glyphs[Math.floor(Math.random() * glyphs.length)];
-          ctx.fillStyle = isDayMode
-            ? `rgba(56, 189, 248, ${layer.alpha * 0.75})`
-            : `rgba(0, 255, 65, ${layer.alpha * 0.75})`;
-          ctx.fillText(trail, drawX, d.y - layer.size);
+        const depthRatio = 1 - s.z / W;
+        ctx.strokeStyle = isDayMode
+          ? `rgba(186, 230, 253, ${depthRatio * 0.65})`
+          : `rgba(212, 255, 224, ${depthRatio * 0.65})`;
+        ctx.lineWidth = Math.max(0.5, depthRatio * 2.1);
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(sx, sy);
+        ctx.stroke();
+      }
 
-          d.y += d.sp + motionBoost * layer.depth;
-          if (d.y > canvas.height + 20) {
-            d.y = -10;
-            d.x = Math.random() * canvas.width;
+      // 3. Classic Crisp Vertical Matrix Code Columns (stepped every 2nd frame for authentic cadence)
+      if (frameTick % 2 === 0) {
+        ctx.font = "bold 14px monospace";
+        for (let i = 0; i < drops.length; i++) {
+          const text = matrixChars[Math.floor(Math.random() * matrixChars.length)];
+          const x = i * 16;
+          const y = drops[i] * 16;
+
+          ctx.fillStyle = isDayMode ? "rgba(56, 189, 248, 0.42)" : "rgba(0, 255, 65, 0.42)";
+          ctx.fillText(text, x, y);
+
+          if (y > H && Math.random() > 0.975) {
+            drops[i] = 0;
           }
+          drops[i]++;
         }
       }
-      requestAnimationFrame(renderFrame);
-    }
-    requestAnimationFrame(renderFrame);
 
-    /* ================= 2. VELVETY WARM INTERSTELLAR ORGAN PAD ================= */
+      requestAnimationFrame(draw3DSpaceAndMatrix);
+    }
+    requestAnimationFrame(draw3DSpaceAndMatrix);
+
+    /* ================= 2. EVOLVING INTERSTELLAR 4-CHORD SYNTH + COSMIC WIND ================= */
     let audioCtx = null;
     let ambientStarted = false;
     let masterGain = null;
     let soundEnabled = true;
     const soundToggle = document.getElementById("soundToggle");
 
-    function startWarmSpacePad() {
+    // Evolving Interstellar-inspired 4-chord progression (freqs in Hz)
+    const spaceChords = [
+      [55.00, 110.00, 164.81, 220.00, 329.63], // Am (A1, A2, E3, A3, E4)
+      [43.65, 87.31,  164.81, 220.00, 261.63], // Fmaj7 (F1, F2, E3, A3, C4)
+      [65.41, 130.81, 164.81, 196.00, 293.66], // Cadd9 (C2, C3, E3, G3, D4)
+      [49.00, 98.00,  146.83, 196.00, 246.94]  // G6 (G1, G2, D3, G3, B3)
+    ];
+    let chordIndex = 0;
+    let chordOscillators = [];
+
+    function startEvolvingSpaceAudio() {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (!AudioContext) return;
       if (!audioCtx) audioCtx = new AudioContext();
@@ -564,64 +589,100 @@
       masterGain = audioCtx.createGain();
       masterGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
       if (soundEnabled) {
-        masterGain.gain.exponentialRampToValueAtTime(0.22, audioCtx.currentTime + 2.5);
+        masterGain.gain.exponentialRampToValueAtTime(0.24, audioCtx.currentTime + 2.5);
       }
       masterGain.connect(audioCtx.destination);
 
-      // Ultra-warm lowpass filter (removes all harsh high frequencies)
-      const filter = audioCtx.createBiquadFilter();
-      filter.type = "lowpass";
-      filter.frequency.setValueAtTime(155, audioCtx.currentTime);
-      filter.Q.setValueAtTime(0.7, audioCtx.currentTime);
+      // A. Warm Low-Pass Filter for Organ Pad
+      const padFilter = audioCtx.createBiquadFilter();
+      padFilter.type = "lowpass";
+      padFilter.frequency.setValueAtTime(280, audioCtx.currentTime);
+      padFilter.Q.setValueAtTime(0.8, audioCtx.currentTime);
 
-      // Slow cinematic breathing swell (14-second cycle)
-      const lfo = audioCtx.createOscillator();
-      const lfoGain = audioCtx.createGain();
-      lfo.frequency.setValueAtTime(0.07, audioCtx.currentTime);
-      lfoGain.gain.setValueAtTime(45, audioCtx.currentTime);
-      lfo.connect(lfoGain);
-      lfoGain.connect(filter.frequency);
-      lfo.start();
-      filter.connect(masterGain);
+      // Breathing filter sweep
+      const filterLfo = audioCtx.createOscillator();
+      const filterLfoGain = audioCtx.createGain();
+      filterLfo.frequency.setValueAtTime(0.09, audioCtx.currentTime);
+      filterLfoGain.gain.setValueAtTime(120, audioCtx.currentTime);
+      filterLfo.connect(filterLfoGain);
+      filterLfoGain.connect(padFilter.frequency);
+      filterLfo.start();
+      padFilter.connect(masterGain);
 
-      // Pure sine waves in warm Interstellar A-major/minor cinema voicing
-      const notes = [
-        { freq: 55.00, vol: 0.45 },  // A1 deep sub
-        { freq: 82.41, vol: 0.25 },  // E2 warm fifth
-        { freq: 110.0, vol: 0.18 },  // A2 octave
-        { freq: 164.81, vol: 0.10 }  // E3 soft shimmer
-      ];
-
-      notes.forEach(n => {
+      // Create 5 layered sine/triangle voices that glide smoothly between chords
+      spaceChords[0].forEach((freq, idx) => {
         const osc = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(n.freq, audioCtx.currentTime);
-        g.gain.setValueAtTime(n.vol, audioCtx.currentTime);
-        osc.connect(g);
-        g.connect(filter);
+        const voiceGain = audioCtx.createGain();
+        osc.type = idx < 2 ? "sine" : "triangle";
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        voiceGain.gain.setValueAtTime(idx === 0 ? 0.36 : (idx === 1 ? 0.22 : 0.08), audioCtx.currentTime);
+        osc.connect(voiceGain);
+        voiceGain.connect(padFilter);
         osc.start();
+        chordOscillators.push(osc);
       });
+
+      // Evolve chord every 7 seconds with smooth portamento glide
+      setInterval(() => {
+        if (!audioCtx || !soundEnabled) return;
+        chordIndex = (chordIndex + 1) % spaceChords.length;
+        const nextChord = spaceChords[chordIndex];
+        const now = audioCtx.currentTime;
+        chordOscillators.forEach((osc, i) => {
+          osc.frequency.setTargetAtTime(nextChord[i], now, 1.4);
+        });
+      }, 7000);
+
+      // B. Gentle Cosmic Solar Wind (Filtered Pink Noise)
+      const bufferSize = audioCtx.sampleRate * 3;
+      const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const output = noiseBuffer.getChannelData(0);
+      let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        b0 = 0.99886 * b0 + white * 0.0555179;
+        b1 = 0.99332 * b1 + white * 0.0750759;
+        b2 = 0.96900 * b2 + white * 0.1538520;
+        b3 = 0.86650 * b3 + white * 0.3104856;
+        b4 = 0.55000 * b4 + white * 0.5329522;
+        b5 = -0.7616 * b5 - white * 0.0168980;
+        output[i] = (b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362) * 0.03;
+        b6 = white * 0.115926;
+      }
+      const whiteNoise = audioCtx.createBufferSource();
+      whiteNoise.buffer = noiseBuffer;
+      whiteNoise.loop = true;
+
+      const windFilter = audioCtx.createBiquadFilter();
+      windFilter.type = "bandpass";
+      windFilter.frequency.setValueAtTime(340, audioCtx.currentTime);
+      windFilter.Q.setValueAtTime(1.5, audioCtx.currentTime);
+
+      const windGain = audioCtx.createGain();
+      windGain.gain.setValueAtTime(0.14, audioCtx.currentTime);
+
+      whiteNoise.connect(windFilter);
+      windFilter.connect(windGain);
+      windGain.connect(masterGain);
+      whiteNoise.start();
     }
 
-    // Auto-start warm ambience on first touch anywhere on the page
     ["pointerdown", "touchstart", "click"].forEach(evt => {
-      window.addEventListener(evt, startWarmSpacePad, { once: true });
+      window.addEventListener(evt, startEvolvingSpaceAudio, { once: true });
     });
 
-    // Subtle deep underwater sonar drop (replaces harsh text-notification beeps)
     function playSubtleSonarDrop() {
       if (!soundEnabled) return;
-      startWarmSpacePad();
+      startEvolvingSpaceAudio();
       if (!audioCtx) return;
       const now = audioCtx.currentTime;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = "sine";
-      osc.frequency.setValueAtTime(290, now);
-      osc.frequency.exponentialRampToValueAtTime(165, now + 0.45);
+      osc.frequency.setValueAtTime(280, now);
+      osc.frequency.exponentialRampToValueAtTime(160, now + 0.45);
       gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.06, now + 0.06);
+      gain.gain.linearRampToValueAtTime(0.055, now + 0.06);
       gain.gain.exponentialRampToValueAtTime(0.0005, now + 0.65);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
@@ -633,9 +694,9 @@
       e.stopPropagation();
       soundEnabled = !soundEnabled;
       soundToggle.textContent = soundEnabled ? "🌌 AMBIENT: ON" : "🔇 AMBIENT: OFF";
-      startWarmSpacePad();
+      startEvolvingSpaceAudio();
       if (masterGain && audioCtx) {
-        masterGain.gain.setTargetAtTime(soundEnabled ? 0.22 : 0.0001, audioCtx.currentTime, 0.4);
+        masterGain.gain.setTargetAtTime(soundEnabled ? 0.24 : 0.0001, audioCtx.currentTime, 0.4);
       }
     });
 
@@ -650,7 +711,7 @@
       runScan();
     });
 
-    /* ================= 4. 3D FLOATING TILT + COMPASS PARALLAX ================= */
+    /* ================= 4. ANDROID COMPASS + 3D CAMERA PARALLAX ================= */
     const compassRing = document.getElementById("compassRing");
     const hdgVal = document.getElementById("hdgVal");
     const sensorTag = document.getElementById("sensorTag");
@@ -664,23 +725,17 @@
       return dirs[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
     }
 
-    function apply3DDeviceMotion(e) {
-      // Smooth 3D floating tilt from phone beta (front/back) and gamma (left/right)
-      if (typeof e.beta === "number" && typeof e.gamma === "number") {
-        const clampedBeta = Math.max(-25, Math.min(25, e.beta - 45));
-        const clampedGamma = Math.max(-25, Math.min(25, e.gamma));
-        document.documentElement.style.setProperty("--tilt-x", `${(-clampedBeta * 0.35).toFixed(1)}deg`);
-        document.documentElement.style.setProperty("--tilt-y", `${(clampedGamma * 0.35).toFixed(1)}deg`);
+    function updateCameraParallax(e) {
+      if (typeof e.beta === "number") {
+        const clampedBeta = Math.max(-30, Math.min(30, e.beta - 45));
+        cameraPitchOffset = -clampedBeta * 2.2;
       }
     }
 
     function updateRadarHeading(deg, label) {
       currentHeading = Math.round(((deg % 360) + 360) % 360);
-      const delta = Math.abs(((currentHeading - lastHeading + 540) % 360) - 180);
-      if (delta > 1) {
-        motionBoost = Math.min(5, motionBoost + delta * 0.18);
-        compassParallaxX -= ((currentHeading - lastHeading + 540) % 360 - 180) * 1.4;
-      }
+      const delta = ((currentHeading - lastHeading + 540) % 360) - 180;
+      cameraYawOffset = Math.max(-140, Math.min(140, cameraYawOffset - delta * 1.8));
       lastHeading = currentHeading;
 
       hdgVal.textContent = `${String(currentHeading).padStart(3, "0")}° ${toCompass(currentHeading)}`;
@@ -718,20 +773,20 @@
       let absActive = false;
 
       window.addEventListener("deviceorientationabsolute", (e) => {
-        apply3DDeviceMotion(e);
+        updateCameraParallax(e);
         if (e.alpha !== null) {
           absActive = true;
-          updateRadarHeading(360 - e.alpha, "MAG-NORTH 3D");
+          updateRadarHeading(360 - e.alpha, "MAG-NORTH");
         }
       }, true);
 
       const handleStd = (e) => {
-        apply3DDeviceMotion(e);
+        updateCameraParallax(e);
         if (absActive) return;
         if (typeof e.webkitCompassHeading === "number") {
-          updateRadarHeading(e.webkitCompassHeading, "IOS-NORTH 3D");
+          updateRadarHeading(e.webkitCompassHeading, "IOS-NORTH");
         } else if (e.alpha !== null) {
-          updateRadarHeading(360 - e.alpha, "GYRO 3D");
+          updateRadarHeading(360 - e.alpha, "GYRO");
         }
       };
 
@@ -1012,7 +1067,7 @@
     }
 
     function runScan() {
-      startWarmSpacePad();
+      startEvolvingSpaceAudio();
       initCompass();
       statusEl.textContent = "SCANNING 140 KM APPROACH SECTOR & ORBITS...";
       navigator.geolocation.getCurrentPosition(async pos => {
