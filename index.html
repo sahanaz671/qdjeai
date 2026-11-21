@@ -2,49 +2,172 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SkyWatch Live</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>SkyWatch — Night Sky Radar</title>
   <script src="https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js"></script>
   <style>
-    body { font-family: system-ui, sans-serif; background: #070b14; color: #e2e8f0; margin: 0; padding: 16px; }
-    .container { max-width: 600px; margin: 0 auto; }
-    h1 { font-size: 1.4rem; margin-bottom: 4px; color: #38bdf8; }
-    .sub { color: #94a3b8; font-size: 0.9rem; margin-bottom: 16px; }
-    button { background: #0284c7; color: white; border: none; padding: 12px 18px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; width: 100%; }
-    .status { margin: 12px 0; font-size: 0.85rem; color: #94a3b8; }
-    .card { background: #111827; border: 1px solid #1e293b; border-radius: 10px; padding: 14px; margin-bottom: 10px; }
-    .badge { display: inline-block; font-size: 0.75rem; padding: 2px 8px; border-radius: 99px; font-weight: 600; margin-bottom: 6px; }
-    .plane { background: #1e3a8a; color: #93c5fd; }
-    .sat { background: #064e3b; color: #6ee7b7; }
-    .title { font-weight: 700; font-size: 1.05rem; }
-    .meta { font-size: 0.85rem; color: #cbd5e1; margin-top: 4px; }
-    .debug { background: #020617; border: 1px solid #334155; border-radius: 8px; padding: 10px; font-family: monospace; font-size: 0.78rem; color: #fbbf24; margin-top: 16px; white-space: pre-wrap; }
+    :root {
+      --bg: #03050a;
+      --card: rgba(15, 23, 42, 0.72);
+      --border: rgba(56, 189, 248, 0.16);
+      --accent: #38bdf8;
+      --emerald: #34d399;
+      --amber: #fbbf24;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top, #0b132b 0%, var(--bg) 65%);
+      color: var(--text);
+      margin: 0;
+      padding: 18px 16px 40px;
+      min-height: 100vh;
+    }
+    .container { max-width: 540px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    h1 { font-size: 1.35rem; margin: 0; letter-spacing: -0.02em; background: linear-gradient(90deg, #e0f2fe, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .sub { color: var(--muted); font-size: 0.82rem; margin-top: 2px; }
+    .controls { display: flex; gap: 8px; margin-bottom: 14px; }
+    button {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #fff;
+      border: 1px solid rgba(125, 211, 252, 0.25);
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      flex: 1;
+      transition: transform 0.15s ease, opacity 0.2s ease;
+    }
+    button:active { transform: scale(0.98); }
+    button.secondary { background: rgba(30, 41, 59, 0.8); flex: 0 0 auto; font-size: 0.85rem; }
+    .compass-bar {
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 16px;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .compass-dial {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(56, 189, 248, 0.4);
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(2, 6, 23, 0.6);
+    }
+    .needle {
+      width: 2px; height: 32px;
+      background: linear-gradient(to bottom, #f43f5e 50%, #64748b 50%);
+      border-radius: 2px;
+      transition: transform 0.12s ease-out;
+    }
+    .status { font-size: 0.82rem; color: var(--muted); margin-bottom: 12px; text-align: center; }
+    .card {
+      background: var(--card);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 15px;
+      margin-bottom: 12px;
+      animation: fadeIn 0.35s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .badge { font-size: 0.72rem; padding: 3px 9px; border-radius: 99px; font-weight: 700; letter-spacing: 0.03em; }
+    .plane { background: rgba(2, 132, 199, 0.22); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.3); }
+    .sat { background: rgba(16, 185, 129, 0.18); color: #6ee7b7; border: 1px solid rgba(52, 211, 153, 0.3); }
+    .approach-tag { font-size: 0.75rem; font-weight: 600; color: var(--amber); }
+    .title { font-weight: 700; font-size: 1.08rem; margin-bottom: 6px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(148, 163, 184, 0.12); }
+    .metric-label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .metric-val { font-size: 0.88rem; font-weight: 600; color: var(--text); margin-top: 1px; }
+    .align-hint { margin-top: 8px; font-size: 0.8rem; color: #38bdf8; font-weight: 500; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🌌 SkyWatch Live</h1>
-    <div class="sub">Connected to Cloudflare Edge Proxy</div>
-    <button id="scanBtn">📍 Scan My Sky Now</button>
-    <div id="status" class="status">Tap above to scan.</div>
+    <header>
+      <div>
+        <h1>🌌 SkyWatch Night</h1>
+        <div class="sub">Visual Overhead Radar (~45 km radius)</div>
+      </div>
+    </header>
+
+    <div class="compass-bar">
+      <div>
+        <div class="metric-label">Phone Heading</div>
+        <div class="metric-val" id="headingText">Move phone to calibrate</div>
+      </div>
+      <div class="compass-dial">
+        <div class="needle" id="needle"></div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button id="scanBtn">🔭 Scan My Sky</button>
+      <button id="compassBtn" class="secondary">🧭 Compass</button>
+    </div>
+
+    <div id="status" class="status">Ready to scan your local sky.</div>
     <div id="results"></div>
-    <div id="debug" class="debug">Debug Log ready...</div>
   </div>
 
   <script>
     const PROXY_URL = "https://skywatch-proxy.itzsahanaj-0671.workers.dev";
     const statusEl = document.getElementById("status");
     const resultsEl = document.getElementById("results");
-    const debugEl = document.getElementById("debug");
-
-    function log(msg) {
-      debugEl.textContent += `\n[${new Date().toLocaleTimeString()}] ${msg}`;
-    }
+    const headingText = document.getElementById("headingText");
+    const needle = document.getElementById("needle");
+    let phoneHeading = null;
+    let currentItems = [];
 
     function toCompass(deg) {
       const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
-      return dirs[Math.round(deg / 45) % 8];
+      return dirs[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
     }
+
+    function updateCompassUI(heading) {
+      phoneHeading = Math.round(heading);
+      headingText.textContent = `${toCompass(phoneHeading)} (${phoneHeading}°)`;
+      needle.style.transform = `rotate(${-phoneHeading}deg)`;
+      document.querySelectorAll("[data-az]").forEach(el => {
+        const targetAz = Number(el.dataset.az);
+        const diff = ((targetAz - phoneHeading + 540) % 360) - 180;
+        if (Math.abs(diff) <= 12) {
+          el.textContent = "🎯 Aligned! Look up now";
+          el.style.color = "#34d399";
+        } else {
+          el.textContent = diff > 0 ? `↪ Turn right ${Math.abs(diff)}°` : `↩ Turn left ${Math.abs(diff)}°`;
+          el.style.color = "#38bdf8";
+        }
+      });
+    }
+
+    function initCompass() {
+      if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+        DeviceOrientationEvent.requestPermission().then(res => {
+          if (res === "granted") window.addEventListener("deviceorientation", handleOrientation, true);
+        }).catch(() => {});
+      } else {
+        window.addEventListener("deviceorientationabsolute", handleOrientation, true);
+        window.addEventListener("deviceorientation", handleOrientation, true);
+      }
+    }
+
+    function handleOrientation(e) {
+      let heading = e.webkitCompassHeading ?? (e.alpha !== null ? (360 - e.alpha) % 360 : null);
+      if (heading !== null) updateCompassUI(heading);
+    }
+
+    document.getElementById("compassBtn").addEventListener("click", initCompass);
 
     function getBearingAndDist(lat1, lon1, lat2, lon2) {
       const R = 6371;
@@ -56,101 +179,139 @@
       const x = Math.cos(lat1 * Math.PI / 180) * Math.sin(lat2 * Math.PI / 180) -
                 Math.sin(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.cos(dLon);
       const brng = ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
-      return { dist: Math.round(dist), brng: Math.round(brng) };
+      return { dist, brng: Math.round(brng) };
+    }
+
+    function analyzeApproach(brngFromUser, trackDeg, distKm, speedKmh) {
+      if (trackDeg === undefined || trackDeg === null || speedKmh < 50) {
+        return { label: "In area", route: "Heading unknown" };
+      }
+      const bearingToUser = (brngFromUser + 180) % 360;
+      const angleDiff = Math.abs(((trackDeg - bearingToUser + 540) % 360) - 180);
+      const fromDir = toCompass((trackDeg + 180) % 360);
+      const toDir = toCompass(trackDeg);
+      const route = `Moving ${fromDir} → ${toDir} (${Math.round(trackDeg)}°)`;
+
+      if (distKm <= 8) return { label: "🔥 Directly Overhead", route };
+      if (angleDiff <= 55) {
+        const mins = Math.max(1, Math.round((distKm / speedKmh) * 60));
+        return { label: `⏳ Approaching (~${mins} min)`, route };
+      }
+      if (angleDiff >= 125) return { label: "↗ Moving Away", route };
+      return { label: "↔ Passing Nearby", route };
     }
 
     async function fetchPlanes(lat, lon) {
-      const radiusNm = 150; // ~275 km wide test radius (we'll shrink this once verified!)
+      const radiusNm = 25; // ~46 km visual approach window
       const url = `${PROXY_URL}/?type=planes&lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}&radius=${radiusNm}`;
-      log("Fetching planes via Worker...");
       const res = await fetch(url);
-      log(`Planes status: ${res.status}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) return [];
       const data = await res.json();
-      const list = data.ac || [];
-      log(`Raw planes returned: ${list.length}`);
-
-      return list
+      return (data.ac || [])
         .filter(p => p.lat && p.lon && p.alt_baro !== "ground")
         .map(p => {
           const { dist, brng } = getBearingAndDist(lat, lon, p.lat, p.lon);
           const altFt = typeof p.alt_baro === "number" ? p.alt_baro : 0;
           const speedKmh = Math.round((p.gs || 0) * 1.852);
-          const model = p.t ? ` (${p.t})` : "";
+          const { label, route } = analyzeApproach(brng, p.track, dist, speedKmh);
+          const model = p.t ? ` • ${p.t}` : "";
           return {
             type: "plane",
-            name: `${(p.flight || p.r || "Unknown Flight").trim()}${model}`,
-            detail: `Look ${toCompass(brng)} (${brng}°) • ${dist} km away`,
-            sub: `Altitude: ${altFt.toLocaleString()} ft • Speed: ${speedKmh} km/h`,
-            dist
+            name: `${(p.flight || p.r || "Aircraft").trim()}${model}`,
+            tag: label,
+            az: brng,
+            look: `${toCompass(brng)} (${brng}°)`,
+            distText: `${dist.toFixed(1)} km away`,
+            route,
+            speedAlt: `${speedKmh} km/h • ${altFt.toLocaleString()} ft`,
+            sortKey: dist
           };
         })
-        .sort((a, b) => a.dist - b.dist);
+        .sort((a, b) => a.sortKey - b.sortKey);
     }
 
     async function fetchSatellites(lat, lon) {
-      log("Fetching bright satellites via Worker...");
       const res = await fetch(`${PROXY_URL}/?type=sats`);
-      log(`Satellites status: ${res.status}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) return [];
       const txt = await res.text();
       const lines = txt.replace(/\r/g, "").trim().split("\n").map(l => l.trim()).filter(Boolean);
-      log(`Loaded ${Math.floor(lines.length / 3)} bright satellites`);
-
       const now = new Date();
+      const later = new Date(now.getTime() + 60000); // +1 min to find travel direction
       const gmst = satellite.gstime(now);
+      const gmstLater = satellite.gstime(later);
       const observerGd = { longitude: satellite.degreesToRadians(lon), latitude: satellite.degreesToRadians(lat), height: 0.1 };
       const overhead = [];
 
       for (let i = 0; i < lines.length - 2; i += 3) {
-        const name = lines[i];
         const satrec = satellite.twoline2satrec(lines[i+1], lines[i+2]);
-        const posVel = satellite.propagate(satrec, now);
-        if (!posVel.position) continue;
-        const positionEcf = satellite.eciToEcf(posVel.position, gmst);
-        const lookAngles = satellite.ecfToLookAngles(observerGd, positionEcf);
-        const elevDeg = satellite.radiansToDegrees(lookAngles.elevation);
-        if (elevDeg > 5) {
-          const azDeg = Math.round(satellite.radiansToDegrees(lookAngles.azimuth));
+        const posNow = satellite.propagate(satrec, now);
+        const posNext = satellite.propagate(satrec, later);
+        if (!posNow.position || !posNext.position) continue;
+
+        const lookNow = satellite.ecfToLookAngles(observerGd, satellite.eciToEcf(posNow.position, gmst));
+        const elevDeg = satellite.radiansToDegrees(lookNow.elevation);
+
+        if (elevDeg > 25) {
+          const azNow = Math.round(satellite.radiansToDegrees(lookNow.azimuth));
+          const lookNext = satellite.ecfToLookAngles(observerGd, satellite.eciToEcf(posNext.position, gmstLater));
+          const azNext = Math.round(satellite.radiansToDegrees(lookNext.azimuth));
+          const elevNext = satellite.radiansToDegrees(lookNext.elevation);
+
           overhead.push({
             type: "sat",
-            name,
-            detail: `Look ${toCompass(azDeg)} (${azDeg}°) • ${Math.round(elevDeg)}° above horizon`,
-            sub: `Range: ${Math.round(lookAngles.rangeSat)} km • Orbital object`,
-            elev: elevDeg
+            name: lines[i],
+            tag: elevNext > elevDeg ? "⏳ Rising Higher" : "↘ Descending",
+            az: azNow,
+            look: `${toCompass(azNow)} (${azNow}°) • ${Math.round(elevDeg)}° high`,
+            distText: `${Math.round(lookNow.rangeSat)} km slant range`,
+            route: `Tracking ${toCompass(azNow)} → ${toCompass(azNext)}`,
+            speedAlt: `~27,500 km/h • Low Earth Orbit`,
+            sortKey: 90 - elevDeg
           });
         }
       }
-      log(`Satellites above 5° horizon: ${overhead.length}`);
-      return overhead.sort((a, b) => b.elev - a.elev).slice(0, 15);
+      return overhead.sort((a, b) => a.sortKey - b.sortKey).slice(0, 8);
     }
 
     document.getElementById("scanBtn").addEventListener("click", () => {
-      debugEl.textContent = "Starting Worker scan...";
-      statusEl.textContent = "Getting GPS location...";
-      resultsEl.innerHTML = "";
+      initCompass();
+      statusEl.textContent = "Locking GPS & scanning overhead...";
       navigator.geolocation.getCurrentPosition(async pos => {
         const { latitude: lat, longitude: lon } = pos.coords;
-        log(`GPS locked: ${lat.toFixed(4)}, ${lon.toFixed(4)}`);
-        statusEl.textContent = `Scanning sky above ${lat.toFixed(3)}, ${lon.toFixed(3)}...`;
-
-        const planes = await fetchPlanes(lat, lon).catch(e => { log("Planes Error: " + e.message); return []; });
-        const sats = await fetchSatellites(lat, lon).catch(e => { log("Sats Error: " + e.message); return []; });
-
+        const [planes, sats] = await Promise.all([fetchPlanes(lat, lon), fetchSatellites(lat, lon)]);
         const all = [...planes, ...sats];
-        statusEl.textContent = `Found ${planes.length} planes and ${sats.length} satellites.`;
+        statusEl.textContent = `Visible sky: ${planes.length} aircraft • ${sats.length} high satellites`;
         resultsEl.innerHTML = all.length ? all.map(item => `
           <div class="card">
-            <span class="badge ${item.type}">${item.type === "plane" ? "✈️ AIRCRAFT" : "🛰️ SATELLITE"}</span>
+            <div class="card-top">
+              <span class="badge ${item.type}">${item.type === "plane" ? "✈️ AIRCRAFT" : "🛰️ SATELLITE"}</span>
+              <span class="approach-tag">${item.tag}</span>
+            </div>
             <div class="title">${item.name}</div>
-            <div class="meta">${item.detail}</div>
-            <div class="meta">${item.sub}</div>
+            <div class="grid">
+              <div>
+                <div class="metric-label">Look Direction</div>
+                <div class="metric-val">${item.look}</div>
+              </div>
+              <div>
+                <div class="metric-label">Distance</div>
+                <div class="metric-val">${item.distText}</div>
+              </div>
+              <div>
+                <div class="metric-label">Trajectory</div>
+                <div class="metric-val">${item.route}</div>
+              </div>
+              <div>
+                <div class="metric-label">Speed & Altitude</div>
+                <div class="metric-val">${item.speedAlt}</div>
+              </div>
+            </div>
+            <div class="align-hint" data-az="${item.az}">🧭 Tap Compass & turn phone to line up</div>
           </div>
-        `).join("") : "<div class='card'>No objects found—check the yellow Debug Log below!</div>";
+        `).join("") : "<div class='card' style='text-align:center;color:#94a3b8;'>Clear sky right now—no aircraft within 45 km or satellites above 25°.</div>";
       }, err => {
-        log("GPS Error: " + err.message);
-        statusEl.textContent = "Location error: " + err.message;
-      });
+        statusEl.textContent = "GPS error: " + err.message;
+      }, { enableHighAccuracy: true });
     });
   </script>
 </body>
