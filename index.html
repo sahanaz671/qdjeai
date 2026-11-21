@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SkyWatch — Diagnostic Test</title>
+  <title>SkyWatch Live</title>
   <script src="https://cdn.jsdelivr.net/npm/satellite.js@5.0.0/dist/satellite.min.js"></script>
   <style>
     body { font-family: system-ui, sans-serif; background: #070b14; color: #e2e8f0; margin: 0; padding: 16px; }
@@ -23,8 +23,8 @@
 </head>
 <body>
   <div class="container">
-    <h1>🌌 SkyWatch Live (Wide Test)</h1>
-    <div class="sub">Testing ±3° radius & live API diagnostics</div>
+    <h1>🌌 SkyWatch Live</h1>
+    <div class="sub">Connected to Cloudflare Edge Proxy</div>
     <button id="scanBtn">📍 Scan My Sky Now</button>
     <div id="status" class="status">Tap above to scan.</div>
     <div id="results"></div>
@@ -32,6 +32,7 @@
   </div>
 
   <script>
+    const PROXY_URL = "https://skywatch-proxy.itzsahanaj-0671.workers.dev";
     const statusEl = document.getElementById("status");
     const resultsEl = document.getElementById("results");
     const debugEl = document.getElementById("debug");
@@ -59,15 +60,14 @@
     }
 
     async function fetchPlanes(lat, lon) {
-      const box = 3; // Widened to ±3° (~330 km) for diagnostic test
-      const url = `https://opensky-network.org/api/states/all?lamin=${lat-box}&lomin=${lon-box}&lamax=${lat+box}&lomax=${lon+box}`;
-      log("Fetching OpenSky planes...");
+      const box = 2.5; // Wide test box (~275 km) before narrowing down
+      const url = `${PROXY_URL}/?type=planes&lamin=${lat-box}&lomin=${lon-box}&lamax=${lat+box}&lomax=${lon+box}`;
+      log("Fetching planes via Worker...");
       const res = await fetch(url);
-      log(`OpenSky HTTP status: ${res.status}`);
-      if (!res.ok) throw new Error(`OpenSky HTTP ${res.status}`);
+      log(`Planes status: ${res.status}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
-      const rawCount = data.states ? data.states.length : 0;
-      log(`OpenSky raw aircraft returned: ${rawCount}`);
+      log(`Raw planes returned: ${data.states ? data.states.length : 0}`);
       if (!data.states) return [];
       return data.states
         .filter(s => !s[8] && s[5] && s[6])
@@ -87,16 +87,13 @@
     }
 
     async function fetchSatellites(lat, lon) {
-      log("Fetching CelesTrak TLE data...");
-      const [issRes, starlinkRes] = await Promise.all([
-        fetch("https://celestrak.org/NORAD/elements/gp.php?CATNR=25544&FORMAT=tle"),
-        fetch("https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=tle")
-      ]);
-      log(`CelesTrak HTTP status: ISS=${issRes.status}, Starlink=${starlinkRes.status}`);
-      const issTxt = await issRes.text();
-      const starlinkTxt = await starlinkRes.text();
-      const lines = (issTxt + "\n" + starlinkTxt).replace(/\r/g, "").trim().split("\n").map(l => l.trim()).filter(Boolean);
-      log(`Total TLE lines loaded: ${lines.length}`);
+      log("Fetching bright satellites via Worker...");
+      const res = await fetch(`${PROXY_URL}/?type=sats`);
+      log(`Satellites status: ${res.status}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const txt = await res.text();
+      const lines = txt.replace(/\r/g, "").trim().split("\n").map(l => l.trim()).filter(Boolean);
+      log(`Loaded ${Math.floor(lines.length / 3)} bright satellites`);
 
       const now = new Date();
       const gmst = satellite.gstime(now);
@@ -111,7 +108,7 @@
         const positionEcf = satellite.eciToEcf(posVel.position, gmst);
         const lookAngles = satellite.ecfToLookAngles(observerGd, positionEcf);
         const elevDeg = satellite.radiansToDegrees(lookAngles.elevation);
-        if (elevDeg > 5) { // Lowered to 5° for test
+        if (elevDeg > 5) {
           const azDeg = Math.round(satellite.radiansToDegrees(lookAngles.azimuth));
           overhead.push({
             type: "sat",
@@ -127,7 +124,7 @@
     }
 
     document.getElementById("scanBtn").addEventListener("click", () => {
-      debugEl.textContent = "Starting diagnostic scan...";
+      debugEl.textContent = "Starting Worker scan...";
       statusEl.textContent = "Getting GPS location...";
       resultsEl.innerHTML = "";
       navigator.geolocation.getCurrentPosition(async pos => {
