@@ -8,7 +8,7 @@
   <style>
     :root {
       --bg: #000400;
-      --panel: rgba(0, 18, 4, 0.82);
+      --panel: rgba(0, 18, 4, 0.84);
       --green: #00ff41;
       --green-dim: rgba(0, 255, 65, 0.25);
       --green-dark: #003b00;
@@ -18,7 +18,7 @@
     }
     body.day-mode {
       --bg: #04131a;
-      --panel: rgba(6, 28, 38, 0.85);
+      --panel: rgba(6, 28, 38, 0.86);
       --green: #38bdf8;
       --green-dim: rgba(56, 189, 248, 0.28);
       --green-dark: #0c4a6e;
@@ -57,25 +57,27 @@
       border-bottom: 1px solid var(--green-dim);
       padding-bottom: 10px;
       margin-bottom: 14px;
+      gap: 6px;
     }
     h1 {
       margin: 0;
-      font-size: 1.25rem;
-      letter-spacing: 0.08em;
+      font-size: 1.15rem;
+      letter-spacing: 0.06em;
       text-shadow: 0 0 10px var(--green);
     }
-    .sub { font-size: 0.72rem; opacity: 0.8; margin-top: 2px; }
+    .sub { font-size: 0.68rem; opacity: 0.8; margin-top: 2px; }
+    .hdr-btns { display: flex; gap: 6px; }
     .mode-btn {
       background: var(--panel);
       color: var(--green);
       border: 1px solid var(--green);
-      padding: 6px 10px;
+      padding: 6px 8px;
       border-radius: 6px;
       font-family: var(--font);
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: bold;
       cursor: pointer;
-      box-shadow: 0 0 10px var(--green-dim);
+      box-shadow: 0 0 8px var(--green-dim);
     }
 
     /* ATC Radar Scope */
@@ -90,7 +92,7 @@
     .radar-header {
       display: flex;
       justify-content: space-between;
-      font-size: 0.78rem;
+      font-size: 0.75rem;
       margin-bottom: 10px;
     }
     .scope-container {
@@ -104,11 +106,10 @@
       overflow: hidden;
       box-shadow: 0 0 20px var(--green-dim);
     }
-    /* Rotating compass ring */
     .compass-ring {
       position: absolute;
       inset: 0;
-      transition: transform 0.12s linear;
+      transition: transform 0.1s linear;
     }
     .compass-ring::before, .compass-ring::after {
       content: "";
@@ -139,7 +140,6 @@
     .d-e { right: 6px; top: 50%; transform: translateY(-50%); }
     .d-w { left: 6px; top: 50%; transform: translateY(-50%); }
 
-    /* Radar Sweep Beam */
     .sweep {
       position: absolute;
       inset: 0;
@@ -150,7 +150,6 @@
     }
     @keyframes radarSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-    /* Human Observer in Center */
     .observer {
       position: absolute;
       top: 50%; left: 50%;
@@ -203,23 +202,22 @@
       padding: 12px;
       border-radius: 8px;
       font-family: var(--font);
-      font-size: 0.95rem;
+      font-size: 0.92rem;
       font-weight: bold;
       cursor: pointer;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.05em;
       box-shadow: 0 0 14px var(--green-dim);
     }
     .scan-btn:active { transform: scale(0.98); }
 
     .status {
       text-align: center;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       margin-bottom: 12px;
       opacity: 0.9;
     }
 
-    /* Telemetry Cards */
     .card {
       background: var(--panel);
       border: 1px solid var(--green-dim);
@@ -235,8 +233,8 @@
     }
     .card.aligned {
       border-color: var(--green);
-      box-shadow: 0 0 18px var(--green-dim);
-      background: rgba(0, 45, 10, 0.88);
+      box-shadow: 0 0 20px var(--green-dim);
+      background: rgba(0, 48, 12, 0.9);
     }
     .card-top {
       display: flex;
@@ -250,28 +248,26 @@
       border: 1px dashed var(--green-dim);
       padding: 6px 8px;
       border-radius: 4px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: bold;
       margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
     }
-    .title { font-size: 1.05rem; font-weight: bold; margin-bottom: 4px; }
+    .title { font-size: 1.02rem; font-weight: bold; margin-bottom: 4px; }
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       border-top: 1px solid var(--green-dim);
       padding-top: 8px;
     }
-    .lbl { opacity: 0.65; font-size: 0.68rem; text-transform: uppercase; }
+    .lbl { opacity: 0.65; font-size: 0.66rem; text-transform: uppercase; }
     .val { font-weight: bold; margin-top: 2px; }
     .align-footer {
       margin-top: 8px;
       padding-top: 6px;
       border-top: 1px dotted var(--green-dim);
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       font-weight: bold;
       display: flex;
       justify-content: space-between;
@@ -285,15 +281,18 @@
     <header>
       <div>
         <h1>[SKYWATCH_RADAR]</h1>
-        <div class="sub" id="modeLabel">SYS.MODE // NIGHT OPTICS (ALL OBJECTS)</div>
+        <div class="sub" id="modeLabel">SYS.MODE // NIGHT OPTICS</div>
       </div>
-      <button class="mode-btn" id="modeToggle">☀️ DAY MODE</button>
+      <div class="hdr-btns">
+        <button class="mode-btn" id="soundToggle">🔊 SFX: ON</button>
+        <button class="mode-btn" id="modeToggle">☀️ DAY</button>
+      </div>
     </header>
 
     <div class="radar-box">
       <div class="radar-header">
         <span>HDG: <strong id="hdgVal">000° N</strong></span>
-        <span id="sensorTag">COMPASS: AUTO-LOCKING...</span>
+        <span id="sensorTag">TAP SCAN TO INIT COMPASS</span>
       </div>
 
       <div class="scope-container">
@@ -319,7 +318,7 @@
       <button class="mode-btn" id="autoBtn">AUTO: OFF</button>
     </div>
 
-    <div class="status" id="status">READY. STAND OUTDOORS & INITIATE SCAN.</div>
+    <div class="status" id="status">READY. TAP INITIATE SKY SCAN TO LOCK COMPASS & RADAR.</div>
     <div id="results"></div>
   </div>
 
@@ -354,73 +353,187 @@
     }
     setInterval(drawMatrix, 45);
 
-    /* ================= 2. DAY / NIGHT MODE SWITCH ================= */
+    /* ================= 2. WEB AUDIO RADAR SYNTHESIZER ================= */
+    let audioCtx = null;
+    let soundEnabled = true;
+    const soundToggle = document.getElementById("soundToggle");
+
+    function unlockAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    }
+
+    function playRadarPing() {
+      if (!soundEnabled) return;
+      unlockAudio();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, now);
+      osc.frequency.exponentialRampToValueAtTime(440, now + 0.35);
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(now);
+      osc.stop(now + 0.4);
+    }
+
+    function playTargetLockBeep() {
+      if (!soundEnabled) return;
+      unlockAudio();
+      if (!audioCtx) return;
+      const now = audioCtx.currentTime;
+      [1100, 1480].forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+        gain.gain.setValueAtTime(0.12, now + idx * 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.12);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + idx * 0.08);
+        osc.stop(now + idx * 0.08 + 0.13);
+      });
+    }
+
+    soundToggle.addEventListener("click", () => {
+      soundEnabled = !soundEnabled;
+      soundToggle.textContent = soundEnabled ? "🔊 SFX: ON" : "🔇 SFX: OFF";
+      if (soundEnabled) playRadarPing();
+    });
+
+    /* ================= 3. DAY / NIGHT MODE SWITCH ================= */
     const modeToggle = document.getElementById("modeToggle");
     const modeLabel = document.getElementById("modeLabel");
     modeToggle.addEventListener("click", () => {
       isDayMode = !isDayMode;
       document.body.classList.toggle("day-mode", isDayMode);
-      modeToggle.textContent = isDayMode ? "🌙 NIGHT MODE" : "☀️ DAY MODE";
+      modeToggle.textContent = isDayMode ? "🌙 NIGHT" : "☀️ DAY";
       modeLabel.textContent = isDayMode
-        ? "SYS.MODE // DAYLIGHT (AIRCRAFT ONLY)"
-        : "SYS.MODE // NIGHT OPTICS (ALL OBJECTS)";
+        ? "SYS.MODE // DAYLIGHT (JETS)"
+        : "SYS.MODE // NIGHT OPTICS";
       runScan();
     });
 
-    /* ================= 3. AUTOMATIC ANDROID COMPASS ================= */
+    /* ================= 4. MULTI-SENSOR ANDROID & IOS COMPASS ================= */
     const compassRing = document.getElementById("compassRing");
     const hdgVal = document.getElementById("hdgVal");
     const sensorTag = document.getElementById("sensorTag");
     let currentHeading = 0;
-    let absLocked = false;
+    let compassStarted = false;
+    let lockedIds = new Set();
 
     function toCompass(deg) {
       const dirs = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
       return dirs[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
     }
 
-    function updateRadarHeading(deg, source) {
+    function updateRadarHeading(deg, sourceLabel) {
       currentHeading = Math.round(((deg % 360) + 360) % 360);
       hdgVal.textContent = `${String(currentHeading).padStart(3, "0")}° ${toCompass(currentHeading)}`;
       compassRing.style.transform = `rotate(${-currentHeading}deg)`;
-      if (source) sensorTag.textContent = source;
+      if (sourceLabel) sensorTag.textContent = sourceLabel;
 
       document.querySelectorAll(".card[data-az]").forEach(card => {
+        const id = card.dataset.id;
         const targetAz = Number(card.dataset.az);
         const diff = ((targetAz - currentHeading + 540) % 360) - 180;
         const alignEl = card.querySelector(".align-text");
+
         if (Math.abs(diff) <= 15) {
           card.classList.add("aligned");
-          alignEl.textContent = "🎯 TARGET LOCKED — LOOK UP NOW!";
+          alignEl.textContent = "🎯 TARGET LOCKED — LOOK UP!";
+          if (!lockedIds.has(id)) {
+            lockedIds.add(id);
+            playTargetLockBeep();
+          }
         } else {
           card.classList.remove("aligned");
+          lockedIds.delete(id);
           alignEl.textContent = diff > 0 ? `↪ TURN RIGHT ${Math.abs(diff)}°` : `↩ TURN LEFT ${Math.abs(diff)}°`;
         }
       });
     }
 
-    function autoStartCompass() {
-      // 1. Android Chrome True North (deviceorientationabsolute)
+    function quaternionToHeading(q) {
+      const [x, y, z, w] = q;
+      const siny = 2 * (w * z + x * y);
+      const cosy = 1 - 2 * (y * y + z * z);
+      const yaw = Math.atan2(siny, cosy) * (180 / Math.PI);
+      return (360 - yaw) % 360;
+    }
+
+    function initAllCompassSensors() {
+      if (compassStarted) return;
+      compassStarted = true;
+      sensorTag.textContent = "PROBING SENSORS...";
+
+      // 1. Generic Sensor API: AbsoluteOrientationSensor (Android Chrome True North)
+      if ("AbsoluteOrientationSensor" in window) {
+        try {
+          const absSensor = new AbsoluteOrientationSensor({ frequency: 30 });
+          absSensor.addEventListener("reading", () => {
+            updateRadarHeading(quaternionToHeading(absSensor.quaternion), "COMPASS: MAG-3D");
+          });
+          absSensor.addEventListener("error", () => startFallbackSensors());
+          absSensor.start();
+          return;
+        } catch (e) {}
+      }
+      startFallbackSensors();
+    }
+
+    function startFallbackSensors() {
+      let gotAbsolute = false;
+
+      // 2. Android deviceorientationabsolute
       window.addEventListener("deviceorientationabsolute", (e) => {
         if (e.alpha !== null) {
-          absLocked = true;
-          updateRadarHeading(360 - e.alpha, "COMPASS: MAGNETIC NORTH");
+          gotAbsolute = true;
+          updateRadarHeading(360 - e.alpha, "COMPASS: MAG-NORTH");
         }
       }, true);
 
-      // 2. Fallback standard orientation (iOS webkitCompassHeading or Android relative)
-      window.addEventListener("deviceorientation", (e) => {
-        if (absLocked) return;
+      // 3. RelativeOrientationSensor (for Android phones without magnetometer, uses Gyro)
+      if ("RelativeOrientationSensor" in window) {
+        try {
+          const relSensor = new RelativeOrientationSensor({ frequency: 30 });
+          relSensor.addEventListener("reading", () => {
+            if (!gotAbsolute) {
+              updateRadarHeading(quaternionToHeading(relSensor.quaternion), "COMPASS: GYRO-3D");
+            }
+          });
+          relSensor.start();
+        } catch (e) {}
+      }
+
+      // 4. Standard deviceorientation (iOS & older Android)
+      const handleStd = (e) => {
+        if (gotAbsolute) return;
         if (typeof e.webkitCompassHeading === "number") {
-          updateRadarHeading(e.webkitCompassHeading, "COMPASS: IOS NORTH");
+          updateRadarHeading(e.webkitCompassHeading, "COMPASS: IOS-MAG");
         } else if (e.alpha !== null) {
-          updateRadarHeading(360 - e.alpha, "COMPASS: GYRO ACTIVE");
+          updateRadarHeading(360 - e.alpha, "COMPASS: GYRO");
         }
-      }, true);
-    }
-    autoStartCompass();
+      };
 
-    /* ================= 4. FLIGHT ROUTES, TIMES & SATELLITES ================= */
+      if (typeof DeviceOrientationEvent !== "undefined" && typeof DeviceOrientationEvent.requestPermission === "function") {
+        DeviceOrientationEvent.requestPermission().then(res => {
+          if (res === "granted") window.addEventListener("deviceorientation", handleStd, true);
+        }).catch(() => {});
+      } else {
+        window.addEventListener("deviceorientation", handleStd, true);
+      }
+    }
+
+    /* ================= 5. FLIGHT ROUTES, TIMES & SATELLITES ================= */
     const PROXY_URL = "https://skywatch-proxy.itzsahanaj-0671.workers.dev";
     const statusEl = document.getElementById("status");
     const resultsEl = document.getElementById("results");
@@ -477,7 +590,7 @@
     }
 
     async function fetchPlanes(lat, lon) {
-      const radiusNm = 35; // ~65 km radar range
+      const radiusNm = 35;
       const url = `${PROXY_URL}/?type=planes&lat=${lat.toFixed(4)}&lon=${lon.toFixed(4)}&radius=${radiusNm}`;
       const res = await fetch(url);
       if (!res.ok) return [];
@@ -494,6 +607,7 @@
         const isCargo = ["FDX", "UPS", "CLX", "GTI", "DHL", "BOX", "ATN"].some(c => callsign.startsWith(c));
 
         return {
+          id: p.hex || callsign,
           type: isCargo ? "📦 CARGO AIRCRAFT" : "✈️ COMMERCIAL JET",
           color: isCargo ? "#ffb000" : "#00ff41",
           name: `${callsign}${p.t ? ` [${p.t}]` : ""}`,
@@ -512,7 +626,7 @@
     }
 
     async function fetchSatellites(lat, lon) {
-      if (isDayMode) return []; // Hidden in Daylight mode
+      if (isDayMode) return [];
       const res = await fetch(`${PROXY_URL}/?type=sats`);
       if (!res.ok) return [];
       const txt = await res.text();
@@ -539,6 +653,7 @@
           const azNext = Math.round(satellite.radiansToDegrees(lookNext.azimuth));
 
           sats.push({
+            id: lines[i],
             type: "🛰️ ORBITAL SATELLITE",
             color: "#00f0ff",
             name: lines[i],
@@ -558,11 +673,15 @@
     }
 
     function runScan() {
+      unlockAudio();
+      initAllCompassSensors();
       statusEl.textContent = "SCANNING AIRSPACE & ORBITAL TELEMETRY...";
       navigator.geolocation.getCurrentPosition(async pos => {
         const { latitude: lat, longitude: lon } = pos.coords;
         const [planes, sats] = await Promise.all([fetchPlanes(lat, lon), fetchSatellites(lat, lon)]);
         const all = [...planes, ...sats];
+
+        if (all.length > 0) playRadarPing();
 
         radarBlips.innerHTML = all.map(item => {
           const rad = (item.az - 90) * (Math.PI / 180);
@@ -574,7 +693,7 @@
         statusEl.textContent = `LOCKED: ${planes.length} AIRCRAFT // ${sats.length} SATELLITES`;
 
         resultsEl.innerHTML = all.length ? all.map(item => `
-          <div class="card" data-az="${item.az}">
+          <div class="card" data-az="${item.az}" data-id="${item.id}">
             <div class="card-top">
               <span>${item.type}</span>
               <span>${item.timeStatus}</span>
