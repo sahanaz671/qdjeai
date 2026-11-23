@@ -412,6 +412,44 @@
       display: flex;
       justify-content: space-between;
     }
+
+    /* Lower Error Log Toggle & Drawer */
+    .err-log-wrap {
+      margin-top: 12px;
+    }
+    .err-log-btn {
+      background: var(--panel);
+      color: var(--green);
+      border: 1px solid var(--green);
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-family: var(--font);
+      font-size: 0.7rem;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 10px var(--green-dim);
+    }
+    .err-log-btn.has-error {
+      background: rgba(255, 59, 48, 0.2);
+      color: #ff8a80;
+      border-color: var(--red);
+      box-shadow: 0 0 14px rgba(255, 59, 48, 0.35);
+    }
+    .err-log-drawer {
+      display: none;
+      margin-top: 8px;
+      padding: 10px;
+      background: rgba(20, 5, 5, 0.94);
+      color: #ff8a80;
+      border: 1px solid var(--red);
+      border-radius: 8px;
+      font-family: var(--font);
+      font-size: 0.68rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 190px;
+      overflow-y: auto;
+    }
   </style>
 </head>
 <body>
@@ -489,9 +527,99 @@
 
     <div class="status" id="status">TAP ANYWHERE TO ENGAGE 432Hz/528Hz MEDITATION FIELD & LIVE TELEMETRY RAIN.</div>
     <div id="results"></div>
+
+    <!-- Error-Only Log Toggle & Hidden Drawer -->
+    <div class="err-log-wrap" id="errLogWrap">
+      <button class="err-log-btn" id="errLogToggle" type="button">🟢 ERR: 0</button>
+      <pre class="err-log-drawer" id="errLogDrawer"></pre>
+    </div>
   </div>
 
   <script>
+    /* ================= 0. ERROR-ONLY LOG & MANIFEST LOADER ================= */
+    const errLogToggle = document.getElementById("errLogToggle");
+    const errLogDrawer = document.getElementById("errLogDrawer");
+    let moduleErrorCount = 0;
+
+    function logModuleError(source, reason) {
+      moduleErrorCount += 1;
+      if (errLogToggle) {
+        errLogToggle.textContent = `🔴 ERR: ${moduleErrorCount}`;
+        errLogToggle.classList.add("has-error");
+      }
+      if (errLogDrawer) {
+        const stamp = new Date().toLocaleTimeString();
+        errLogDrawer.textContent += `[${stamp}] [${source}] ${reason}\n`;
+      }
+    }
+
+    if (errLogToggle && errLogDrawer) {
+      errLogToggle.addEventListener("click", (e) => {
+        e.stopPropagation();
+        errLogDrawer.style.display = errLogDrawer.style.display === "block" ? "none" : "block";
+      });
+    }
+
+    window.addEventListener("error", (event) => {
+      if (event.target && event.target.tagName === "SCRIPT") {
+        const src = event.target.getAttribute("src") || "external-script";
+        logModuleError(src, "Script failed to load (check filename, path case, or network)");
+        return;
+      }
+      const file = event.filename || "index.html";
+      const line = event.lineno ? ` (line ${event.lineno})` : "";
+      logModuleError(`${file}${line}`, event.message || "Runtime error");
+    }, true);
+
+    window.addEventListener("unhandledrejection", (event) => {
+      const reason = event.reason && event.reason.message
+        ? event.reason.message
+        : String(event.reason || "Unhandled promise rejection");
+      logModuleError("promise", reason);
+    });
+
+    async function loadOmegaManifest() {
+      const manifestPath = "./Modules/manifest.json";
+      try {
+        const res = await fetch(manifestPath, { cache: "no-store" });
+        if (!res.ok) {
+          logModuleError(manifestPath, `HTTP ${res.status} — manifest file missing or unreachable`);
+          return;
+        }
+
+        let manifest;
+        try {
+          manifest = await res.json();
+        } catch (parseErr) {
+          logModuleError(manifestPath, `Invalid JSON syntax — ${parseErr.message}`);
+          return;
+        }
+
+        const modules = Array.isArray(manifest.modules) ? manifest.modules : [];
+        for (const modPath of modules) {
+          if (typeof modPath !== "string" || !modPath.trim()) {
+            logModuleError(manifestPath, "Invalid module entry in manifest array");
+            continue;
+          }
+          try {
+            const script = document.createElement("script");
+            script.src = modPath.trim();
+            script.async = false;
+            script.onerror = () => {
+              logModuleError(modPath.trim(), "Module script failed to load (missing file, wrong folder/case, or network error)");
+            };
+            document.body.appendChild(script);
+          } catch (injectErr) {
+            logModuleError(modPath.trim(), `Injection failed — ${injectErr.message || injectErr}`);
+          }
+        }
+      } catch (fetchErr) {
+        logModuleError(manifestPath, `Fetch error — ${fetchErr.message || "Could not load manifest"}`);
+      }
+    }
+
+    loadOmegaManifest();
+
     /* ================= 1. LIVE TELEMETRY MATRIX DATA STREAM ================= */
     const canvas = document.getElementById("dataMatrixCanvas");
     const ctx = canvas.getContext("2d");
@@ -1231,7 +1359,6 @@
         autoBtn.textContent = "AUTO: 15S";
       }
     });
-   </script>
+  </script>
 </body>
 </html>
-
